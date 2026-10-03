@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EcoSmart | Climate Change & Smart Devices</title>
+<meta name="description" content="Live weather and air quality, climate facts, smart devices that cut emissions, and an eco-habits survey.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -28,7 +30,7 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
 .nl.on{color:#16a34a;font-weight:600}.dark .nl.on{color:#4ade80}
 .nl.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:#16a34a;border-radius:2px}
 #mm{max-height:0;opacity:0;overflow:hidden;transition:.3s}#mm.open{max-height:420px;opacity:1}
-.flip{perspective:1000px;height:320px}.flip-in{position:relative;width:100%;height:100%;text-align:center;transition:transform .6s;transform-style:preserve-3d}
+.flip{perspective:1000px;height:370px}.flip-in{position:relative;width:100%;height:100%;text-align:center;transition:transform .6s;transform-style:preserve-3d}
 .flip:hover .flip-in,.flip:active .flip-in{transform:rotateY(180deg)}
 .ff,.fb{position:absolute;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:1rem;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
 .ff{display:flex;flex-direction:column;background:#fff;border:1px solid rgba(148,163,184,.2)}.dark .ff{background:#1e293b;border-color:#334155}
@@ -128,6 +130,8 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
           <p id="wxAqiL" class="font-semibold text-lg">—</p>
         </div>
       </div>
+      <div id="wxFc" class="grid grid-cols-5 gap-2 sm:gap-4 mt-6"></div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 mt-5 text-xs text-slate-500"><span class="font-semibold">AQI scale:</span><span><i class="inline-block w-2 h-2 rounded-full bg-green-600"></i> 0–50 Good</span><span><i class="inline-block w-2 h-2 rounded-full bg-yellow-600"></i> 51–100 Moderate</span><span><i class="inline-block w-2 h-2 rounded-full bg-orange-600"></i> 101–150 Sensitive</span><span><i class="inline-block w-2 h-2 rounded-full bg-red-600"></i> 151–200 Unhealthy</span><span><i class="inline-block w-2 h-2 rounded-full bg-purple-600"></i> 201–300 Very unhealthy</span><span><i class="inline-block w-2 h-2 rounded-full bg-red-900"></i> 300+ Hazardous</span></div>
       <p id="wxTip" class="mt-4 text-sm mut"><i class="fa-solid fa-lightbulb text-yellow-500"></i> <span></span></p>
     </div>
   </div>
@@ -148,16 +152,30 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
   </div>
   <div><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">Myths vs. facts</h3><div id="lnMy" class="max-w-3xl mx-auto space-y-4"></div></div>
   <div><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">What you can do</h3><div id="lnDo" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
+  <div><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">Test your knowledge</h3><div id="lnQz"></div></div>
 </div></section>
 
 <!-- DEVICES -->
 <section id="devices" class="tab py-20 sm:py-24"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
   <div class="text-center max-w-2xl mx-auto mb-16"><h2 class="h2 mb-4">Devices That Cut Emissions</h2><p class="mut">Hover or tap each device to see how it directly reduces energy waste and carbon output.</p></div>
+  <div class="flex flex-col sm:flex-row gap-3 justify-center mb-6 max-w-2xl mx-auto"><input id="devQ" oninput="devQ=this.value;drawDev()" class="inp" placeholder="Search devices (e.g. cooling, solar, standby)"><select id="devS" onchange="devS=this.value;drawDev()" class="inp sm:!w-56"><option value="">Sort: Default</option><option value="co2">Most CO₂ saved</option><option value="cost">Lowest cost</option><option value="ease">Easiest setup</option></select></div>
   <div id="devFilter" class="flex flex-wrap justify-center gap-3 mb-10"></div>
   <div id="devGrid" class="flex flex-wrap justify-center gap-6"></div>
   <div class="mt-24"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-center">Compare the Climate Impact</h3>
     <p class="text-center text-sm mut mb-8">Indicative yearly savings for a typical home. CO₂ uses about 0.71 kg per kWh (rough India grid average). Real results vary.</p>
-    <div class="card overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-100 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th class="p-4">Device</th><th class="p-4">Best for</th><th class="p-4">kWh saved / yr</th><th class="p-4">CO₂ avoided / yr</th><th class="p-4">Cost</th><th class="p-4">Ease</th></tr></thead><tbody id="devTbl"></tbody></table></div></div>
+    <div class="card overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-100 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th class="p-4">Device</th><th class="p-4">Best for</th><th class="p-4">kWh saved / yr</th><th class="p-4">CO₂ avoided / yr</th><th class="p-4">Cost</th><th class="p-4">Ease</th><th class="p-4">Used by</th></tr></thead><tbody id="devTbl"></tbody></table></div></div>
+  <div class="mt-24 card p-8"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2"><i class="fa-solid fa-list-check text-eco-600"></i> Build Your Savings Plan</h3>
+    <p class="mut text-sm mb-6">Tick the devices you plan to install to see your combined yearly savings. Estimates only; solar is per 1 kW and the fan is per fan.</p>
+    <div id="plList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    <div class="flex items-center gap-3 my-6 text-sm"><label class="font-semibold">Electricity price (₹ per unit)</label><input id="plR" type="number" min="0" step="0.5" value="7" oninput="plan()" class="inp !w-28 !py-2"></div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+      <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-4"><p class="text-2xl font-extrabold" id="plK">0</p><p class="text-xs text-slate-500">kWh saved / year</p></div>
+      <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-4"><p class="text-2xl font-extrabold text-eco-600" id="plM">₹0</p><p class="text-xs text-slate-500">saved on bills / year</p></div>
+      <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-4"><p class="text-2xl font-extrabold" id="plC">0</p><p class="text-xs text-slate-500">kg CO₂ avoided / year</p></div>
+      <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-4"><p class="text-2xl font-extrabold text-eco-600" id="plT">0</p><p class="text-xs text-slate-500">trees' yearly absorption</p></div></div>
+    <div class="grid grid-cols-2 gap-4 mt-4 text-center"><div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-4"><p class="text-xl font-extrabold" id="plU">₹0</p><p class="text-xs text-slate-500">approx. upfront cost</p></div><div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-4"><p class="text-xl font-extrabold text-eco-600" id="plP">–</p><p class="text-xs text-slate-500">approx. payback</p></div></div>
+    <div class="flex flex-wrap items-center gap-3 mt-6"><button onclick="savePlan()" class="btn !py-2 text-sm"><i class="fa-solid fa-floppy-disk"></i> Save my plan</button><span id="plMsg" class="text-xs text-slate-500">Sign in to save your plan to your account.</span></div>
+    <p class="text-xs text-slate-500 mt-3">Cost uses a rough midpoint of the price ranges in the device details (Inverter AC = extra cost over a basic AC). Payback assumes the savings shown and is only a guide.</p></div>
   <div class="mt-24"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">Smart Buying Guide</h3><div id="devGuide" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div></div>
   <div class="mt-16 rounded-2xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 p-6 text-sm text-yellow-900 dark:text-yellow-100"><b><i class="fa-solid fa-scale-balanced"></i> The smart-device trade-off:</b> every connected gadget uses a little standby power (often 1–3 W) and carries manufacturing emissions and e-waste. Buy only what you will really use, start with the biggest energy users like cooling and lighting, and use devices for years.</div>
 </div></section>
@@ -225,9 +243,10 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
   <div id="authNote" class="hidden mb-4 p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-sm font-medium"></div>
   <div id="profile" class="hidden card p-8 text-center shadow-xl">
     <div class="w-16 h-16 mx-auto rounded-full bg-eco-600 text-white flex items-center justify-center text-2xl mb-3"><i class="fa-solid fa-user"></i></div>
-    <h2 id="pName" class="text-2xl font-bold text-slate-900 dark:text-white"></h2><p id="pMail" class="text-sm text-slate-500 mb-6"></p>
+    <h2 id="pName" class="text-2xl font-bold text-slate-900 dark:text-white"></h2><p id="pMail" class="text-sm text-slate-500 mb-4"></p><div id="pStats" class="grid grid-cols-3 gap-2 mb-6 text-center"></div>
     <button onclick="go('survey')" class="btn w-full mb-3">Eco Survey</button>
     <button onclick="logout()" class="w-full py-3 rounded-full border border-slate-300 dark:border-slate-700 font-semibold">Log out</button>
+    <button onclick="delAcct()" class="mt-4 text-xs text-red-500 hover:underline">Delete my account</button>
   </div>
   <div id="authBox" class="card shadow-xl p-8">
     <div id="tabsAuth" class="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-6 text-sm font-semibold">
@@ -261,6 +280,8 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
   </div>
   <div class="border-t border-slate-800 pt-8 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center gap-2"><p>&copy; 2026 EcoSmart Initiative. All rights reserved.</p><p>Weather &amp; AQI data: Open-Meteo</p></div>
 </div></footer>
+<div id="devModal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="if(event.target===this)devX()"><div id="devMB" class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative"></div></div>
+<button id="up" onclick="scrollTo({top:0,behavior:'smooth'})" class="hidden fixed bottom-6 right-6 z-30 w-12 h-12 rounded-full bg-eco-600 hover:bg-eco-700 text-white shadow-lg" title="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
 
 <script>
 /* ---------- helpers ---------- */
@@ -306,7 +327,7 @@ const CK=[['Conduct an Energy Audit','Find old bulbs, drafty windows and applian
 let ckDone=store.get('eco_ck',[]);
 function drawCk(){$('ckList').innerHTML=CK.map((c,i)=>`<div class="ck card flex items-start gap-4 p-5 cursor-pointer hover:shadow-md ${ckDone.includes(i)?'done':''}" onclick="tick(${i})"><div class="cb mt-0.5 w-6 h-6 rounded-md border-2 border-slate-300 dark:border-slate-600 shrink-0 flex items-center justify-center"><i class="fa-solid fa-check ci text-sm text-white"></i></div><div><h4 class="ct font-bold text-slate-800 dark:text-slate-100">${c[0]}</h4><p class="text-slate-500 dark:text-slate-400 text-sm mt-1">${c[1]}</p></div></div>`).join('');
   const p=Math.round(ckDone.length/CK.length*100);$('ckPct').textContent=p+'%';$('ckBar').style.width=p+'%'}
-function tick(i){ckDone=ckDone.includes(i)?ckDone.filter(x=>x!==i):ckDone.concat(i);store.set('eco_ck',ckDone);drawCk()}
+function tick(i){ckDone=ckDone.includes(i)?ckDone.filter(x=>x!==i):ckDone.concat(i);store.set('eco_ck',ckDone);drawCk();if(getUser())api('/checklist',{method:'POST',body:JSON.stringify({items:ckDone})}).catch(()=>{})}
 drawCk();
 
 /* ---------- charts ---------- */
@@ -329,12 +350,13 @@ async function wxLoad(lat,lon,name){
   wxCur=[lat,lon,name];$('wxErr').classList.add('hidden');$('wxUpd').textContent='Updating…';
   try{
     const [w,a]=await Promise.allSettled([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`).then(r=>r.json()),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto`).then(r=>r.json()),
       fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5,pm10&timezone=auto`).then(r=>r.json())]);
     if(w.status!=='fulfilled'||!w.value.current)throw 0;
     const c=w.value.current,[d,ic]=WX(c.weather_code);
     $('wxName').textContent=name;$('wxT').textContent=Math.round(c.temperature_2m);$('wxFeel').textContent=Math.round(c.apparent_temperature);
     $('wxDesc').textContent=d;$('wxIcon').className='fa-solid '+ic+' text-5xl';$('wxHum').textContent=Math.round(c.relative_humidity_2m);$('wxWind').textContent=Math.round(c.wind_speed_10m);
+    const dd=w.value.daily;$('wxFc').innerHTML=dd?dd.time.map((t,i)=>`<div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-3 text-center"><p class="text-xs font-semibold text-slate-500">${i?new Date(t+'T12:00').toLocaleDateString([],{weekday:'short'}):'Today'}</p><i class="fa-solid ${WX(dd.weather_code[i])[1]} text-xl text-sky-500 my-2"></i><p class="text-sm font-bold">${Math.round(dd.temperature_2m_max[i])}°<span class="text-slate-400 font-normal"> ${Math.round(dd.temperature_2m_min[i])}°</span></p></div>`).join(''):'';
     let tip='Live air-quality data is unavailable for this location right now.';
     if(a.status==='fulfilled'&&a.value.current&&a.value.current.us_aqi!=null){
       const q=a.value.current,[l,col,t]=AQ(q.us_aqi);$('wxAqi').textContent=Math.round(q.us_aqi);$('wxAqiL').textContent=l;$('wxAqiBox').style.background=col;
@@ -369,16 +391,16 @@ async function api(path,opts={}){const r=await fetch('/api'+path,{...opts,header
 async function authSubmit(e){e.preventDefault();const b=$('aBtn');b.disabled=true;
   try{const d=await api(mode==='register'?'/register':'/login',{method:'POST',body:JSON.stringify({name:$('aName').value.trim(),email:$('aMail').value.trim(),password:$('aPass').value})});
     localStorage.setItem('eco_token',d.token);me=d.user;$('authForm').reset();$('authNote').classList.add('hidden');
-    const t=pending||'home';pending=null;refreshAuth();go(t)}
+    const t=pending||'home';pending=null;refreshAuth();loadData();go(t)}
   catch(err){note(err.message);if(/register first/.test(err.message))authMode('register');if(/already registered/.test(err.message))authMode('login')}
   b.disabled=false}
-function logout(){try{localStorage.removeItem('eco_token')}catch(e){}me=null;refreshAuth();go('home')}
-function refreshAuth(){const u=getUser();
+function logout(){try{localStorage.removeItem('eco_token')}catch(e){}me=null;myData=null;setPlanBoxes([]);refreshAuth();go('home')}
+function refreshAuth(){const u=getUser();drawStats();
   document.querySelectorAll('.acct').forEach(a=>a.textContent=u?u.name.split(' ')[0]:'Account');
   $('profile').classList.toggle('hidden',!u);$('authBox').classList.toggle('hidden',!!u);
   if(u){$('pName').textContent=u.name;$('pMail').textContent=u.email;$('authNote').classList.add('hidden')}else authMode(mode)}
 authMode('login');refreshAuth();
-(async()=>{if(tok()){try{me=(await api('/me')).user}catch(e){try{localStorage.removeItem('eco_token')}catch(x){}}refreshAuth()}})();
+(async()=>{if(tok()){try{me=(await api('/me')).user}catch(e){try{localStorage.removeItem('eco_token')}catch(x){}}refreshAuth();loadData()}})();
 
 /* ---------- survey ---------- */
 const QS=[
@@ -389,12 +411,12 @@ const QS=[
 ['Do you track your electricity use?',[['Never',0],['Only when I see the bill',1],['Regularly, with a meter or app',3]],'An energy monitor shows which appliances waste the most power.'],
 ['Do you use renewable energy at home?',[['No, and no plans',0],['Planning to (solar, green tariff)',1],['Yes, rooftop solar or green power',3]],'Look into rooftop solar or a green-energy plan from your electricity provider.']];
 async function renderSurvey(){
-  const u=getUser();if(!u)return;const el=$('svBody');let r=null;try{r=(await api('/survey')).result}catch(e){}
+  const u=getUser();if(!u)return;const el=$('svBody');let r=null,cm=null;try{r=(await api('/survey')).result}catch(e){}if(myData)myData.survey=r?r.pct:null;if(r){try{cm=await(await fetch('/api/stats')).json()}catch(e){}}
   if(r){
     const lv=r.pct>=75?['Eco Champion','🌿']:r.pct>=45?['On the Right Track','🌱']:['Getting Started','🌍'];
     const tips=QS.map((q,i)=>r.a[i]<=1?q[2]:null).filter(Boolean);
     el.innerHTML=`<div class="card p-8 text-center shadow-lg"><p class="text-5xl">${lv[1]}</p><h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">${lv[0]}, ${u.name.split(' ')[0]}!</h3>
-    <p class="text-6xl font-extrabold text-eco-600 mt-4">${r.pct}%</p><p class="text-sm text-slate-500">Eco score (${r.score}/${QS.length*3})</p>
+    <p class="text-6xl font-extrabold text-eco-600 mt-4">${r.pct}%</p><p class="text-sm text-slate-500">Eco score (${r.score}/${QS.length*3})</p>${cm&&cm.n?`<p class="text-xs text-slate-500 mt-1">Community average: ${cm.avg}% from ${cm.n} response${cm.n>1?'s':''}</p>`:''}
     <div class="h-3 rounded bg-slate-200 dark:bg-slate-800 my-6"><div class="h-3 rounded bg-eco-500" style="width:${r.pct}%"></div></div>
     ${r.interest?`<p class="text-sm mut mb-4">Device you are most interested in: <b>${r.interest}</b></p>`:''}
     <div class="text-left space-y-2 mb-6">${tips.length?'<h4 class="font-bold text-slate-900 dark:text-white">Your personal tips</h4>'+tips.map(t=>`<p class="text-sm mut"><i class="fa-solid fa-leaf text-eco-500"></i> ${t}</p>`).join(''):'<p class="mut text-sm">Fantastic – you are already following great habits. Keep inspiring others!</p>'}</div>
@@ -430,11 +452,104 @@ function drawDev(){
   $('devGrid').innerHTML=DEV.filter(d=>devF==='All'||DX[d[0]][1]===devF).map(d=>{const x=DX[d[0]];
     const front=d[2]?`<img src="${d[2]}" alt="${d[0]}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="h-[65%] bg-gradient-to-br from-eco-400 to-teal-700 flex items-center justify-center text-white text-6xl"><i class="fa-solid ${d[3]}"></i></div>`;
     return `<div class="flip w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]"><div class="flip-in"><div class="ff">${front}<div class="ffc"><h3 class="text-lg font-bold text-slate-900 dark:text-white">${d[0]}</h3><p class="text-eco-600 dark:text-eco-400 text-sm font-medium">${d[1]}</p></div></div>
-    <div class="fb"><i class="fa-solid ${d[3]} text-3xl mb-2 text-eco-200"></i><h4 class="font-bold text-lg mb-2">${d[4]}</h4><p class="text-sm text-eco-50">${d[5]}</p><p class="text-xs mt-3 bg-white/20 rounded-full px-3 py-1">≈ ${x[0].toLocaleString()} kWh · ${Math.round(x[0]*.71)} kg CO₂ / yr</p><p class="text-xs mt-2 opacity-80">${x[1]} cost · ${x[2]} to set up</p></div></div></div>`}).join('')}
+    <div class="fb"><i class="fa-solid ${d[3]} text-3xl mb-2 text-eco-200"></i><h4 class="font-bold text-lg mb-2">${d[4]}</h4><p class="text-sm text-eco-50">${d[5]}</p><p class="text-xs mt-3 bg-white/20 rounded-full px-3 py-1">≈ ${x[0].toLocaleString()} kWh · ${Math.round(x[0]*.71)} kg CO₂ / yr</p><p class="text-xs mt-2 opacity-80">${x[1]} cost · ${x[2]} to set up</p><button onclick="devM('${d[0]}')" class="mt-3 text-xs font-semibold bg-white text-eco-800 rounded-full px-4 py-1.5 hover:bg-eco-100">Full details <i class="fa-solid fa-arrow-right"></i></button></div></div></div>`}).join('')}
 drawDev();
 const cc={Low:'text-green-600',Medium:'text-yellow-600',High:'text-red-600'};
 $('devTbl').innerHTML=DEV.map(d=>{const x=DX[d[0]];return `<tr class="border-t border-slate-200 dark:border-slate-800"><td class="p-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap"><i class="fa-solid ${d[3]} text-eco-600 mr-2"></i>${d[0]}</td><td class="p-4 mut">${x[3]}</td><td class="p-4">${x[0].toLocaleString()}</td><td class="p-4 font-semibold text-eco-600">${Math.round(x[0]*.71)} kg</td><td class="p-4 font-semibold ${cc[x[1]]}">${x[1]}</td><td class="p-4 mut">${x[2]}</td></tr>`}).join('');
 $('devGuide').innerHTML=[['fa-star','Check the star label','Choose BEE-rated appliances; more stars mean lower running cost and emissions.'],['fa-bullseye','Target big users first','Cooling, water heating and lighting usually matter more than small gadgets.'],['fa-wifi','Prefer open standards','Look for Matter or Zigbee support so devices keep working without one brand’s cloud.'],['fa-recycle','Buy once, use long','Choose durable products and recycle old electronics responsibly.']].map(g=>`<div class="card p-6"><i class="fa-solid ${g[0]} text-eco-600 text-2xl mb-3"></i><h4 class="font-bold text-slate-900 dark:text-white mb-2">${g[1]}</h4><p class="text-sm mut">${g[2]}</p></div>`).join('');
+/* ---------- quiz + back to top ---------- */
+const QZ=[['Which gas contributes most to human-caused warming?',['Carbon dioxide','Oxygen','Nitrogen','Helium'],0,'CO₂ from burning fossil fuels is the largest contributor.'],
+['Which AC temperature setting is generally recommended to save energy?',['16–18°C','19–21°C','24–26°C','Below 16°C'],2,'Each extra degree can save roughly 6% of cooling energy.'],
+['What does the AQI measure?',['Ocean temperature','Air pollution level','Rainfall','Sea level'],1,'The Air Quality Index rates how clean or polluted the air is and its health risk.'],
+['What did the Paris Agreement aim for?',['Limit warming well below 2°C, aiming for 1.5°C','Ban all cars','Stop all farming','Cool Earth by 5°C'],0,'Countries agreed to hold warming well below 2°C and pursue 1.5°C.'],
+['About how much less energy do LEDs use than old incandescent bulbs?',['About 10%','About 25%','Up to 75–80%','None'],2,'LEDs produce the same light using a fraction of the electricity.']];
+let qzI=0,qzS=0;
+function qz(){const el=$('lnQz');
+  if(qzI>=QZ.length){const p=Math.round(qzS/QZ.length*100);el.innerHTML=`<div class="card p-8 max-w-2xl mx-auto text-center"><p class="text-5xl">${p>=80?'🌿':p>=50?'🌱':'🌍'}</p><p class="text-3xl font-extrabold text-eco-600 mt-2">${qzS} / ${QZ.length}</p><p class="mut mt-2">${p>=80?'Excellent – you are a climate expert!':p>=50?'Good job! Explore the Learn tab to improve.':'Keep learning – every fact helps.'}</p><button onclick="qzI=0;qzS=0;qz()" class="btn mt-6">Play again</button></div>`;return}
+  const q=QZ[qzI];el.innerHTML=`<div class="card p-8 max-w-2xl mx-auto"><p class="text-xs text-slate-500 mb-2">Question ${qzI+1} of ${QZ.length}</p><p class="font-bold text-slate-900 dark:text-white mb-4">${q[0]}</p><div class="space-y-2">${q[1].map((o,i)=>`<button onclick="qzA(${i})" class="qo w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-eco-500 text-sm">${o}</button>`).join('')}</div><p id="qzF" class="mt-4 text-sm"></p></div>`}
+function qzA(i){const q=QZ[qzI];document.querySelectorAll('.qo').forEach((b,j)=>{b.disabled=true;if(j===q[2])b.classList.add('bg-green-100','border-green-500','text-green-900');else if(j===i)b.classList.add('bg-red-100','border-red-400','text-red-900')});
+  if(i===q[2])qzS++;$('qzF').innerHTML=`${i===q[2]?'✅ Correct!':'❌ Not quite.'} ${q[3]} <button onclick="qzI++;qz()" class="ml-2 font-semibold text-eco-600 underline">${qzI+1<QZ.length?'Next':'See score'}</button>`}
+qz();
+addEventListener('scroll',()=>$('up').classList.toggle('hidden',scrollY<600),{passive:true});
+/* ---------- devices v3: details modal, planner, new fan ---------- */
+DEV.push(['BLDC Smart Fan','Efficient Ventilation','','fa-fan','Half the Power','Brushless (BLDC) ceiling fans use roughly 28–35 W instead of 70–80 W, and many have remote or app control.']);
+DX['BLDC Smart Fan']=[120,'Low','Easy','Fans (per fan)'];
+const DI={
+'Smart Thermostat':['₹1,500–3,500 for a smart IR AC controller; ducted HVAC thermostats cost more','Often under 1 year','Learns your routine and adjusts the AC using room sensors, schedules and phone location. In India, smart AC controllers send IR commands to ordinary split ACs.',['Works with your AC brand','Built-in temperature and humidity sensor','Schedules that still run if Wi‑Fi drops'],['Mount away from direct sun and the AC outlet','Set 24–26°C as the default','Create away and sleep schedules'],'Raising the AC setting by 1°C cuts cooling energy by roughly 6%.'],
+'Smart LED Bulbs':['₹500–1,200 per smart bulb; plain LEDs cost ₹80–200','Months for the most-used lights','LEDs turn almost all power into light instead of heat. Smart versions add dimming, schedules and motion or daylight control.',['Higher lumens per watt is better','BIS-marked, ideally BEE-rated','Pick warm or cool white to suit the room'],['Start with your 5 most-used lights','Add schedules and motion sensors','Dim in the evening'],'Good LEDs last 15,000–25,000+ hours, which is many years of normal use.'],
+'Smart Plugs':['₹700–1,500','About 1–2 years for always-on gear','Sits between the wall and an appliance so you can cut power on a schedule and, in many models, see how much it uses.',['Power-monitoring model','Rated for your load (10A or 16A)','Works with a major app or Matter'],['Use on TVs, set-top boxes, consoles and chargers','Do not use on fridges or medical devices','Schedule power off at night'],'Standby loads can account for roughly 5–10% of home electricity.'],
+'Energy Monitor':['₹2,000–8,000 plus installation','1–3 years if you act on the findings','Clamp sensors on the main supply measure real-time use, so you can see which appliances and hours cost the most.',['Per-circuit or appliance-level data','Installed by a qualified electrician','Data export or local access'],['Check the baseline at night when everyone sleeps','Look for the top 3 energy users','Review weekly and set a target'],'You cannot cut what you do not measure: many homes find one forgotten appliance wasting power.'],
+'Smart EV Charger':['₹20,000–50,000 including installation','Depends on how much you drive','Schedules and controls charging so your EV charges when grid tariffs are low or when your solar panels are producing.',['Correct connector for your vehicle','Scheduling and load management','Weatherproof rating (IP54 or better)'],['Use a dedicated, properly earthed circuit','Charge at off-peak hours or from solar','Use a licensed electrician'],'An EV charged from solar or off-peak renewable power has far lower emissions than a petrol car.'],
+'Rooftop Solar':['About ₹50,000–70,000 per kW before subsidy','Roughly 4–7 years; panels last 25+ years','Panels turn sunlight into electricity that offsets grid power, and net metering can credit extra units you send back.',['Reputed vendor with BIS-certified panels','Warranty (panels 25 years, inverter 5–10)','Net-metering support'],['Check roof area (about 10 m² per kW) and shade','Apply for net metering with your electricity company','Clean panels regularly'],'Check current government subsidy schemes such as PM Surya Ghar before buying.'],
+'Inverter AC (5-star)':['₹40,000–60,000 for a 1.5-ton 5-star model','Extra cost is often recovered in 2–4 years','An inverter compressor slows down instead of switching on and off, holding the temperature with much less energy.',['BEE 5-star label','Right size for your room','Low-GWP refrigerant (R32 or R290)'],['Set 24–26°C with auto fan','Clean filters every season','Use sleep mode at night'],'ACs run for thousands of hours a year, so efficiency matters more than purchase price.'],
+'Smart Geyser Timer':['₹500–1,500','Under 1 year','A timer or smart switch heats water just before you need it, rather than keeping it hot for hours.',['Heavy-duty relay rated for geyser wattage','ISI-marked','Manual override'],['Heat 15–20 minutes before use','Insulate hot-water pipes','Keep the thermostat at 50–55°C'],'Water heating is one of the biggest electricity uses in many homes.'],
+'BLDC Smart Fan':['₹3,000–6,000','1–3 years if used many hours a day','A brushless motor is far more efficient than a conventional fan motor, and the speed controller keeps it quiet.',['Star rating or wattage listed','Remote or app control','Long warranty'],['Replace the most-used fans first','Pair with an AC at 26°C for the same comfort','Switch off when the room is empty'],'Moving air makes you feel cooler, so a fan lets you run the AC at a higher temperature.']};
+const li2=a=>a.map(t=>`<li class="flex gap-2"><i class="fa-solid fa-circle-check text-eco-500 mt-1"></i><span>${t}</span></li>`).join('');
+function devM(n){const d=DEV.find(x=>x[0]===n),x=DX[n],i=DI[n];if(!i)return;
+  $('devMB').innerHTML=`<button onclick="devX()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="flex items-center gap-4 mb-5"><div class="w-14 h-14 rounded-2xl bg-eco-100 dark:bg-eco-900/40 text-eco-600 flex items-center justify-center text-2xl"><i class="fa-solid ${d[3]}"></i></div><div><h3 class="text-2xl font-bold text-slate-900 dark:text-white">${n}</h3><p class="text-sm text-eco-600 font-medium">${d[1]}</p></div></div>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-6">${[[x[0].toLocaleString()+' kWh','saved / year'],[Math.round(x[0]*.71)+' kg','CO₂ avoided / year'],[x[1],'upfront cost'],[x[2],'to set up']].map(c=>`<div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-3"><p class="font-bold text-slate-900 dark:text-white">${c[0]}</p><p class="text-xs text-slate-500">${c[1]}</p></div>`).join('')}</div>
+  <p class="text-sm mut mb-1"><b class="text-slate-900 dark:text-white">Indicative price:</b> ${i[0]}</p><p class="text-sm mut mb-5"><b class="text-slate-900 dark:text-white">Payback:</b> ${i[1]}</p>
+  <h4 class="font-bold text-slate-900 dark:text-white mb-1">How it helps</h4><p class="text-sm mut mb-5">${i[2]}</p>
+  <div class="grid sm:grid-cols-2 gap-6 mb-5"><div><h4 class="font-bold text-slate-900 dark:text-white mb-2">What to look for</h4><ul class="space-y-2 text-sm mut">${li2(i[3])}</ul></div><div><h4 class="font-bold text-slate-900 dark:text-white mb-2">Setup tips</h4><ul class="space-y-2 text-sm mut">${li2(i[4])}</ul></div></div>
+  <div class="rounded-xl bg-eco-50 dark:bg-eco-900/20 border border-eco-200 dark:border-eco-800 p-4 text-sm"><b class="text-eco-700 dark:text-eco-400"><i class="fa-solid fa-lightbulb"></i> Did you know?</b> ${i[5]}</div>
+  <p class="text-xs text-slate-500 mt-4">Prices and savings are rough estimates and change by brand, city and usage. Check current prices before buying.</p>`;
+  $('devModal').classList.remove('hidden');document.body.style.overflow='hidden'}
+function devX(){$('devModal').classList.add('hidden');document.body.style.overflow=''}
+addEventListener('keydown',e=>{if(e.key==='Escape')devX()});
+function drawTbl(){$('devTbl').innerHTML=DEV.map(d=>{const x=DX[d[0]];return `<tr class="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onclick="devM('${d[0]}')"><td class="p-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap"><i class="fa-solid ${d[3]} text-eco-600 mr-2"></i>${d[0]}</td><td class="p-4 mut">${x[3]}</td><td class="p-4">${x[0].toLocaleString()}</td><td class="p-4 font-semibold text-eco-600">${Math.round(x[0]*.71)} kg</td><td class="p-4 font-semibold ${cc[x[1]]}">${x[1]}</td><td class="p-4 mut">${x[2]}</td></tr>`}).join('')}
+$('plList').innerHTML=DEV.map((d,i)=>`<label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-eco-50 dark:hover:bg-slate-800"><input type="checkbox" class="pl accent-green-600" value="${d[0]}" onchange="plan()"><i class="fa-solid ${d[3]} text-eco-600"></i><span class="text-sm font-medium">${d[0]}</span></label>`).join('');
+function plan(){let k=0;document.querySelectorAll('.pl:checked').forEach(c=>k+=DX[c.value][0]);const r=+$('plR').value||0,co=k*.71;
+  $('plK').textContent=k.toLocaleString();$('plM').textContent='₹'+Math.round(k*r).toLocaleString('en-IN');$('plC').textContent=Math.round(co).toLocaleString();$('plT').textContent=Math.round(co/21)}
+drawDev();drawTbl();
+/* ---------- devices v4: search/sort, community, saved plans, journey ---------- */
+var devQ='',devS='',useStats={},myData=null;
+DI['Inverter AC (5-star)'][0]='₹40,000–60,000 for a 1.5-ton 5-star model (about ₹10,000–20,000 more than a basic AC)';
+const DC={'Smart Thermostat':2500,'Smart LED Bulbs':850,'Smart Plugs':1100,'Energy Monitor':5000,'Smart EV Charger':35000,'Rooftop Solar':60000,'Inverter AC (5-star)':15000,'Smart Geyser Timer':1000,'BLDC Smart Fan':4500};
+function drawDev(){
+  const cr={Low:0,Medium:1,High:2},er={Easy:0,Moderate:1,Hard:2},q=(devQ||'').toLowerCase().trim(),us=useStats||{};
+  $('devFilter').innerHTML=['All','Low','Medium','High'].map(f=>`<button onclick="devF='${f}';drawDev()" class="px-5 py-2 rounded-full text-sm font-semibold border ${f===devF?'bg-eco-600 text-white border-eco-600':'border-slate-300 dark:border-slate-700 hover:border-eco-500'}">${f==='All'?'All devices':f+' cost'}</button>`).join('');
+  const L=DEV.filter(d=>(devF==='All'||DX[d[0]][1]===devF)&&(!q||(d[0]+' '+d[1]+' '+DX[d[0]][3]+' '+d[5]).toLowerCase().includes(q)));
+  if(devS==='co2')L.sort((a,b)=>DX[b[0]][0]-DX[a[0]][0]);else if(devS==='cost')L.sort((a,b)=>cr[DX[a[0]][1]]-cr[DX[b[0]][1]]);else if(devS==='ease')L.sort((a,b)=>er[DX[a[0]][2]]-er[DX[b[0]][2]]);
+  $('devGrid').innerHTML=L.length?L.map(d=>{const x=DX[d[0]],n=us[d[0]]||0;
+    const front=d[2]?`<img src="${d[2]}" alt="${d[0]}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="h-[65%] bg-gradient-to-br from-eco-400 to-teal-700 flex items-center justify-center text-white text-6xl"><i class="fa-solid ${d[3]}"></i></div>`;
+    return `<div class="flip w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]"><div class="flip-in"><div class="ff">${front}<div class="ffc"><h3 class="text-lg font-bold text-slate-900 dark:text-white">${d[0]}</h3><p class="text-eco-600 dark:text-eco-400 text-sm font-medium">${d[1]}</p></div></div>
+    <div class="fb"><i class="fa-solid ${d[3]} text-2xl mb-2 text-eco-200"></i><h4 class="font-bold text-lg mb-2">${d[4]}</h4><p class="text-sm text-eco-50">${d[5]}</p><p class="text-xs mt-3 bg-white/20 rounded-full px-3 py-1">≈ ${x[0].toLocaleString()} kWh · ${Math.round(x[0]*.71)} kg CO₂ / yr</p><p class="text-xs mt-2 opacity-80">${x[1]} cost · ${x[2]} setup${n?' · '+n+' use it':''}</p><button onclick="devM('${d[0]}')" class="mt-3 text-xs font-semibold bg-white text-eco-800 rounded-full px-4 py-1.5 hover:bg-eco-100">Full details <i class="fa-solid fa-arrow-right"></i></button></div></div></div>`}).join(''):'<p class="mut text-center w-full py-10">No devices match your search.</p>'}
+function drawTbl(){const us=useStats||{};$('devTbl').innerHTML=DEV.map(d=>{const x=DX[d[0]];return `<tr class="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onclick="devM('${d[0]}')"><td class="p-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap"><i class="fa-solid ${d[3]} text-eco-600 mr-2"></i>${d[0]}</td><td class="p-4 mut">${x[3]}</td><td class="p-4">${x[0].toLocaleString()}</td><td class="p-4 font-semibold text-eco-600">${Math.round(x[0]*.71)} kg</td><td class="p-4 font-semibold ${cc[x[1]]}">${x[1]}</td><td class="p-4 mut">${x[2]}</td><td class="p-4 mut">${us[d[0]]||0}</td></tr>`}).join('')}
+const _dm=devM;
+devM=function(n){_dm(n);if(!DI[n])return;const on=myData&&myData.using.includes(n),c=(useStats||{})[n]||0;
+  $('devMB').insertAdjacentHTML('beforeend',`<div class="mt-5 flex flex-wrap items-center gap-3"><button onclick="useDev('${n}')" class="btn !py-2 text-sm">${on?'✓ I use this (tap to remove)':'I use this'}</button><span class="text-xs text-slate-500">${c} ${c===1?'household':'households'} on EcoSmart ${c===1?'uses':'use'} this</span></div>`)};
+async function useDev(n){
+  if(!getUser()){devX();note('Please sign in or register to mark the devices you use.');go('auth');return}
+  const on=!(myData&&myData.using.includes(n));
+  try{await api('/devices/use',{method:'POST',body:JSON.stringify({device:n,on})});
+    if(!myData)myData={using:[],plan:[],checklist:null,survey:null};
+    myData.using=on?myData.using.concat(n):myData.using.filter(x=>x!==n);
+    useStats=useStats||{};useStats[n]=Math.max(0,(useStats[n]||0)+(on?1:-1));
+    devM(n);drawDev();drawTbl();drawStats()}catch(e){alert(e.message)}}
+function plan(){let k=0,c=0;document.querySelectorAll('.pl:checked').forEach(b=>{k+=DX[b.value][0];c+=DC[b.value]});
+  const r=+$('plR').value||0,co=k*.71,yr=k*r;
+  $('plK').textContent=k.toLocaleString();$('plM').textContent='₹'+Math.round(yr).toLocaleString('en-IN');$('plC').textContent=Math.round(co).toLocaleString();$('plT').textContent=Math.round(co/21);
+  $('plU').textContent='₹'+c.toLocaleString('en-IN');
+  $('plP').textContent=yr>0?(c/yr<1?'under 1 year':(c/yr).toFixed(1)+' years'):'–'}
+function setPlanBoxes(list){document.querySelectorAll('.pl').forEach(b=>b.checked=(list||[]).includes(b.value));plan()}
+async function savePlan(){
+  if(!getUser()){note('Please sign in or register to save your plan.');go('auth');return}
+  const devices=[...document.querySelectorAll('.pl:checked')].map(b=>b.value);
+  try{await api('/devices/plan',{method:'POST',body:JSON.stringify({devices})});if(myData)myData.plan=devices;$('plMsg').textContent='Plan saved to your account ✓'}catch(e){$('plMsg').textContent=e.message}}
+function drawStats(){const e=$('pStats');if(!e||!myData)return;const ck=Math.round((myData.checklist||ckDone).length/CK.length*100);
+  e.innerHTML=[[myData.survey!=null?myData.survey+'%':'–','Eco score'],[ck+'%','Checklist'],[myData.using.length,'Devices used']].map(c=>`<div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-3"><p class="text-xl font-extrabold text-eco-600">${c[0]}</p><p class="text-xs text-slate-500">${c[1]}</p></div>`).join('')}
+async function loadData(){
+  if(!getUser()){myData=null;return}
+  try{myData=await api('/mydata')}catch(e){return}
+  if(myData.checklist)ckDone=myData.checklist;else if(ckDone.length)api('/checklist',{method:'POST',body:JSON.stringify({items:ckDone})}).catch(()=>{});
+  drawCk();setPlanBoxes(myData.plan);drawStats();drawDev();drawTbl()}
+async function delAcct(){
+  if(!confirm('Delete your account and all your saved data permanently?'))return;
+  const pw=prompt('Enter your password to confirm (it will be visible as you type):');if(!pw)return;
+  try{await api('/me',{method:'DELETE',body:JSON.stringify({password:pw})});logout();alert('Your account was deleted.')}catch(e){alert(e.message)}}
+fetch('/api/devices/stats').then(r=>r.ok?r.json():{}).then(j=>{useStats=j;drawDev();drawTbl()}).catch(()=>{});
+drawDev();drawTbl();plan();
 </script>
 </body>
 </html>

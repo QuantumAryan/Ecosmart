@@ -15,3 +15,6 @@ build command "npm install", start command "npm start".
 1. Push this folder to GitHub (.env is ignored automatically).
 2. vercel.com > Add New > Project > import the repo. Framework: Other. Leave build settings empty.
 3. Settings > Environment Variables: add DATABASE_URL and JWT_SECRET, then Deploy.
+
+## Database tables (created automatically)
+users, survey_responses, subscribers, device_marks (devices people use / plan to buy), checklist (habit progress).

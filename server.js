@@ -36,7 +36,12 @@ async function init() {
       answers INT[] NOT NULL, score INT NOT NULL, pct INT NOT NULL, interest TEXT,
       created_at TIMESTAMPTZ DEFAULT now());
     CREATE TABLE IF NOT EXISTS subscribers (
-      id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, created_at TIMESTAMPTZ DEFAULT now());`);
+      id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, created_at TIMESTAMPTZ DEFAULT now());
+    CREATE TABLE IF NOT EXISTS device_marks (
+      user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE, device TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK (kind IN ('using','plan')), PRIMARY KEY (user_id, device, kind));
+    CREATE TABLE IF NOT EXISTS checklist (
+      user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, items INT[] NOT NULL DEFAULT '{}');`);
 }
 
 app.post('/api/register', limiter, async (req, res) => {
@@ -88,6 +93,61 @@ app.delete('/api/survey', auth, async (req, res) => {
   await pool.query('DELETE FROM survey_responses WHERE user_id=$1', [req.uid]);
   res.json({ ok: true });
 });
+
+app.get('/api/stats', async (req, res) => {
+  const { rows: [r] } = await pool.query('SELECT COUNT(*)::int AS n, COALESCE(ROUND(AVG(pct)),0)::int AS avg FROM survey_responses');
+  res.json(r);
+});
+
+const DEVICES = ['Smart Thermostat','Smart LED Bulbs','Smart Plugs','Energy Monitor','Smart EV Charger','Rooftop Solar','Inverter AC (5-star)','Smart Geyser Timer','BLDC Smart Fan'];
+const wrap = fn => (req, res, next) => fn(req, res, next).catch(e => { console.error(e); res.status(500).json({ error: 'Server error' }); });
+
+// how many households use each device (public)
+app.get('/api/devices/stats', wrap(async (req, res) => {
+  const { rows } = await pool.query("SELECT device, COUNT(*)::int AS n FROM device_marks WHERE kind='using' GROUP BY device");
+  res.json(Object.fromEntries(rows.map(r => [r.device, r.n])));
+}));
+
+// everything saved for the signed-in user
+app.get('/api/mydata', auth, wrap(async (req, res) => {
+  const [m, c, s] = await Promise.all([
+    pool.query('SELECT device, kind FROM device_marks WHERE user_id=$1', [req.uid]),
+    pool.query('SELECT items FROM checklist WHERE user_id=$1', [req.uid]),
+    pool.query('SELECT pct FROM survey_responses WHERE user_id=$1', [req.uid])]);
+  res.json({ using: m.rows.filter(r => r.kind === 'using').map(r => r.device), plan: m.rows.filter(r => r.kind === 'plan').map(r => r.device),
+    checklist: c.rows[0] ? c.rows[0].items : null, survey: s.rows[0] ? s.rows[0].pct : null });
+}));
+
+app.post('/api/devices/use', auth, wrap(async (req, res) => {
+  const { device, on } = req.body || {};
+  if (!DEVICES.includes(device)) return res.status(400).json({ error: 'Unknown device' });
+  if (on) await pool.query("INSERT INTO device_marks(user_id,device,kind) VALUES($1,$2,'using') ON CONFLICT DO NOTHING", [req.uid, device]);
+  else await pool.query("DELETE FROM device_marks WHERE user_id=$1 AND device=$2 AND kind='using'", [req.uid, device]);
+  res.json({ ok: true });
+}));
+
+app.post('/api/devices/plan', auth, wrap(async (req, res) => {
+  const d = (req.body || {}).devices;
+  if (!Array.isArray(d) || d.some(x => !DEVICES.includes(x))) return res.status(400).json({ error: 'Invalid devices' });
+  await pool.query("DELETE FROM device_marks WHERE user_id=$1 AND kind='plan'", [req.uid]);
+  if (d.length) await pool.query("INSERT INTO device_marks(user_id,device,kind) SELECT $1, UNNEST($2::text[]), 'plan' ON CONFLICT DO NOTHING", [req.uid, [...new Set(d)]]);
+  res.json({ ok: true });
+}));
+
+app.post('/api/checklist', auth, wrap(async (req, res) => {
+  const i = (req.body || {}).items;
+  if (!Array.isArray(i) || i.some(n => ![0, 1, 2, 3].includes(n))) return res.status(400).json({ error: 'Invalid items' });
+  await pool.query('INSERT INTO checklist(user_id,items) VALUES($1,$2) ON CONFLICT (user_id) DO UPDATE SET items=$2', [req.uid, [...new Set(i)]]);
+  res.json({ ok: true });
+}));
+
+// delete own account and all data (needs password)
+app.delete('/api/me', auth, wrap(async (req, res) => {
+  const { rows: [u] } = await pool.query('SELECT password_hash FROM users WHERE id=$1', [req.uid]);
+  if (!u || !(await bcrypt.compare(String((req.body || {}).password || ''), u.password_hash))) return res.status(401).json({ error: 'Incorrect password' });
+  await pool.query('DELETE FROM users WHERE id=$1', [req.uid]);
+  res.json({ ok: true });
+}));
 
 app.post('/api/subscribe', limiter, async (req, res) => {
   const { email } = req.body || {};
