@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoSmart | Climate Change & Smart Devices</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{eco:{50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'}}}}}
+</script>
+<style type="text/tailwindcss">
+.card{@apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm}
+.inp{@apply w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-eco-500}
+.btn{@apply bg-eco-600 hover:bg-eco-700 text-white font-semibold rounded-full px-6 py-3 transition-colors}
+.nl{@apply relative py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-eco-600 transition-colors}
+.h2{@apply text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white}
+.mut{@apply text-slate-600 dark:text-slate-400}
+</style>
+<style>
+body{font-family:'Inter',sans-serif;overflow-x:hidden}
+#loader{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:opacity .5s,visibility .5s}
+#loader.gone{opacity:0;visibility:hidden;pointer-events:none}
+.leaf{animation:lp 2s infinite ease-in-out}@keyframes lp{0%,100%{transform:scale(.9) rotate(-5deg);opacity:.7}50%{transform:scale(1.1) rotate(5deg);opacity:1}}
+.tab{display:none}.tab.on{display:block;animation:tf .5s ease-out}@keyframes tf{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nl.on{color:#16a34a;font-weight:600}.dark .nl.on{color:#4ade80}
+.nl.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:#16a34a;border-radius:2px}
+#mm{max-height:0;opacity:0;overflow:hidden;transition:.3s}#mm.open{max-height:420px;opacity:1}
+.flip{perspective:1000px;height:320px}.flip-in{position:relative;width:100%;height:100%;text-align:center;transition:transform .6s;transform-style:preserve-3d}
+.flip:hover .flip-in,.flip:active .flip-in{transform:rotateY(180deg)}
+.ff,.fb{position:absolute;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:1rem;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+.ff{display:flex;flex-direction:column;background:#fff;border:1px solid rgba(148,163,184,.2)}.dark .ff{background:#1e293b;border-color:#334155}
+.ff img{width:100%;height:65%;object-fit:cover;background:#bbf7d0}.ffc{height:35%;display:flex;flex-direction:column;justify-content:center;padding:1rem}
+.fb{background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem}
+.ck.done{opacity:.6}.ck.done .ct{text-decoration:line-through}.ck.done .cb{background:#22c55e;border-color:#22c55e}
+.ci{transform:scale(0);transition:transform .2s}.ck.done .ci{transform:scale(1)}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 antialiased min-h-screen flex flex-col transition-colors duration-300">
+
+<div id="loader" class="bg-white dark:bg-slate-950">
+  <div class="text-eco-600 dark:text-eco-400 leaf mb-4 text-6xl"><i class="fa-solid fa-leaf"></i></div>
+  <h2 class="text-2xl font-bold text-slate-800 dark:text-white">Growing Solutions...</h2>
+</div>
+
+<nav class="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-20 items-center">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="go('home')">
+      <div class="w-10 h-10 rounded-lg bg-eco-600 flex items-center justify-center text-white shadow-md"><i class="fa-solid fa-earth-americas text-xl"></i></div>
+      <span class="font-bold text-xl text-slate-900 dark:text-white">EcoSmart</span>
+    </div>
+    <div class="hidden md:flex items-center gap-6 lg:gap-8">
+      <span id="dnav" class="flex items-center gap-6 lg:gap-8"></span>
+      <div class="h-6 w-px bg-slate-300 dark:bg-slate-700"></div>
+      <button class="themebtn text-slate-500 dark:text-yellow-400 p-1" title="Toggle dark mode"><i class="fa-solid fa-moon dark:hidden text-lg"></i><i class="fa-solid fa-sun hidden dark:block text-lg"></i></button>
+      <button onclick="go('auth')" class="bg-slate-900 dark:bg-eco-600 text-white px-5 py-2 rounded-full text-sm font-medium"><i class="fa-regular fa-user mr-1"></i><span class="acct">Account</span></button>
+    </div>
+    <div class="md:hidden flex items-center gap-4">
+      <button class="themebtn text-slate-500 dark:text-yellow-400"><i class="fa-solid fa-moon dark:hidden text-xl"></i><i class="fa-solid fa-sun hidden dark:block text-xl"></i></button>
+      <button onclick="document.getElementById('mm').classList.toggle('open')" class="p-1"><i class="fa-solid fa-bars text-2xl"></i></button>
+    </div>
+  </div>
+  <div id="mm" class="md:hidden bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 absolute w-full shadow-lg">
+    <div class="px-4 py-3 space-y-2" id="mnav"></div>
+  </div>
+</nav>
+
+<main class="flex-grow pb-8">
+<!-- HOME -->
+<section id="home" class="tab on pt-12 pb-28 sm:pt-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+      <div class="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-eco-100 dark:bg-eco-900/30 text-eco-700 dark:text-eco-400 font-semibold text-sm"><i class="fa-solid fa-bolt text-yellow-500"></i> Smart Living, Greener Planet</div>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.1]">Combat Climate Change from <span class="text-transparent bg-clip-text bg-gradient-to-r from-eco-500 to-teal-500">Your Home.</span></h1>
+        <p class="text-lg mut leading-relaxed max-w-2xl mx-auto lg:mx-0">Sustainability starts with how we use energy every day. Learn how smart devices cut carbon footprints, check the air you breathe right now, and measure your own eco-habits.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+          <button onclick="go('devices')" class="btn shadow-lg">Explore Devices <i class="fa-solid fa-arrow-right ml-1"></i></button>
+          <button onclick="go('survey')" class="card px-8 py-3 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">Take the Eco Survey</button>
+        </div>
+      </div>
+      <div class="w-full lg:w-1/2">
+        <div class="aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl relative border-4 border-white dark:border-slate-800 bg-eco-200">
+          <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1000&q=80" alt="Sustainable plant growth" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl p-4 text-white">
+            <p class="font-semibold text-lg"><i class="fa-solid fa-chart-line text-eco-400"></i> Did you know?</p>
+            <p class="text-sm mt-1">Smart homes can reduce residential energy consumption by up to 30% annually.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-24"><div class="text-center max-w-2xl mx-auto mb-10"><h2 class="h2 mb-3">Climate at a Glance</h2><p class="mut">The numbers behind the urgency (rounded, from NASA, NOAA and the IPCC).</p></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6"><div class="card p-6 text-center"><i class="fa-solid fa-temperature-arrow-up text-eco-600 text-3xl mb-3"></i><p class="text-3xl font-extrabold text-slate-900 dark:text-white">1.2°C+</p><p class="text-sm mut mt-2">Global warming since pre-industrial times</p></div><div class="card p-6 text-center"><i class="fa-solid fa-cloud text-eco-600 text-3xl mb-3"></i><p class="text-3xl font-extrabold text-slate-900 dark:text-white">420+ ppm</p><p class="text-sm mut mt-2">CO₂ in the air today, up from about 280 before industry</p></div><div class="card p-6 text-center"><i class="fa-solid fa-water text-eco-600 text-3xl mb-3"></i><p class="text-3xl font-extrabold text-slate-900 dark:text-white">20 cm+</p><p class="text-sm mut mt-2">Global sea-level rise since 1900</p></div><div class="card p-6 text-center"><i class="fa-solid fa-calendar-check text-eco-600 text-3xl mb-3"></i><p class="text-3xl font-extrabold text-slate-900 dark:text-white">10 of 10</p><p class="text-sm mut mt-2">Warmest years on record all fall in the last decade</p></div></div></div>
+    <!-- LIVE WEATHER -->
+    <div class="card shadow-lg p-6 sm:p-8 mt-20">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white"><i class="fa-solid fa-satellite-dish text-eco-600"></i> Live Weather &amp; Air Quality</h2>
+          <p id="wxUpd" class="text-xs text-slate-500 mt-1">Loading…</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <select id="wxCity" class="inp !w-auto !py-2"></select>
+          <input id="wxQ" class="inp !w-44 !py-2" placeholder="Search any city" onkeydown="if(event.key==='Enter')wxSearch()">
+          <button onclick="wxSearch()" class="btn !py-2 !px-4 text-sm">Search</button>
+          <button onclick="wxLocate()" class="card !rounded-full w-10 h-10 hover:text-eco-600" title="Use my location"><i class="fa-solid fa-location-crosshairs"></i></button>
+        </div>
+      </div>
+      <div id="wxErr" class="hidden mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm"></div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-2xl p-6 bg-gradient-to-br from-sky-500 to-blue-700 text-white">
+          <p class="text-sm opacity-90"><i class="fa-solid fa-location-dot"></i> <span id="wxName">—</span></p>
+          <div class="flex items-center gap-4 mt-3"><i id="wxIcon" class="fa-solid fa-cloud-sun text-5xl"></i><span class="text-6xl font-extrabold"><span id="wxT">--</span>°</span></div>
+          <p id="wxDesc" class="mt-2 font-semibold">—</p><p class="text-sm opacity-90">Feels like <span id="wxFeel">--</span>°C</p>
+        </div>
+        <div class="rounded-2xl p-6 bg-slate-100 dark:bg-slate-800 grid grid-cols-2 gap-4 content-center text-center">
+          <div><i class="fa-solid fa-droplet text-sky-500 text-2xl"></i><p class="text-2xl font-bold mt-1"><span id="wxHum">--</span>%</p><p class="text-xs text-slate-500">Humidity</p></div>
+          <div><i class="fa-solid fa-wind text-teal-500 text-2xl"></i><p class="text-2xl font-bold mt-1"><span id="wxWind">--</span></p><p class="text-xs text-slate-500">Wind km/h</p></div>
+          <div><i class="fa-solid fa-smog text-slate-500 text-2xl"></i><p class="text-2xl font-bold mt-1" id="wxPm25">--</p><p class="text-xs text-slate-500">PM2.5 µg/m³</p></div>
+          <div><i class="fa-solid fa-smog text-slate-400 text-2xl"></i><p class="text-2xl font-bold mt-1" id="wxPm10">--</p><p class="text-xs text-slate-500">PM10 µg/m³</p></div>
+        </div>
+        <div id="wxAqiBox" class="rounded-2xl p-6 text-white flex flex-col justify-center bg-slate-500">
+          <p class="text-sm opacity-90">Air Quality Index (US AQI)</p>
+          <p id="wxAqi" class="text-6xl font-extrabold">--</p>
+          <p id="wxAqiL" class="font-semibold text-lg">—</p>
+        </div>
+      </div>
+      <p id="wxTip" class="mt-4 text-sm mut"><i class="fa-solid fa-lightbulb text-yellow-500"></i> <span></span></p>
+    </div>
+  </div>
+</section>
+
+<!-- LEARN -->
+<section id="learn" class="tab py-20 sm:py-24"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
+  <div class="text-center max-w-2xl mx-auto"><h2 class="h2 mb-4">Understand Climate Change</h2><p class="mut">Climate change is the long-term shift in temperatures and weather patterns. Since the 1800s the main driver has been human activity, mostly burning fossil fuels.</p></div>
+  <div><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">How the greenhouse effect works</h3><div id="lnGh" class="grid md:grid-cols-3 gap-8"></div></div>
+  <div class="grid md:grid-cols-2 gap-8">
+    <div class="card p-8"><h3 class="text-xl font-bold text-slate-900 dark:text-white mb-5"><i class="fa-solid fa-industry text-orange-500"></i> Main causes</h3><ul id="lnCa" class="space-y-4 mut"></ul></div>
+    <div class="card p-8"><h3 class="text-xl font-bold text-slate-900 dark:text-white mb-5"><i class="fa-solid fa-triangle-exclamation text-red-500"></i> Key effects</h3><ul id="lnEf" class="space-y-4 mut"></ul></div>
+  </div>
+  <div class="rounded-3xl bg-gradient-to-br from-eco-600 to-eco-900 text-white p-8 sm:p-10">
+    <h3 class="text-2xl font-bold mb-4"><i class="fa-solid fa-earth-asia"></i> Climate change and India</h3>
+    <p class="text-eco-50 mb-3">Heatwaves are becoming more frequent and intense across northern India, monsoon rainfall is more erratic, coastal areas face rising seas, and Himalayan glaciers that feed major rivers are retreating. Poor air quality in many cities adds to the health burden.</p>
+    <p class="text-eco-50">India has set a goal of net-zero emissions by 2070 and a target of 500 GW of non-fossil electricity capacity by 2030. Households that save power directly support these goals.</p>
+  </div>
+  <div><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">Myths vs. facts</h3><div id="lnMy" class="max-w-3xl mx-auto space-y-4"></div></div>
+  <div><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">What you can do</h3><div id="lnDo" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
+</div></section>
+
+<!-- DEVICES -->
+<section id="devices" class="tab py-20 sm:py-24"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="text-center max-w-2xl mx-auto mb-16"><h2 class="h2 mb-4">Devices That Cut Emissions</h2><p class="mut">Hover or tap each device to see how it directly reduces energy waste and carbon output.</p></div>
+  <div id="devFilter" class="flex flex-wrap justify-center gap-3 mb-10"></div>
+  <div id="devGrid" class="flex flex-wrap justify-center gap-6"></div>
+  <div class="mt-24"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-center">Compare the Climate Impact</h3>
+    <p class="text-center text-sm mut mb-8">Indicative yearly savings for a typical home. CO₂ uses about 0.71 kg per kWh (rough India grid average). Real results vary.</p>
+    <div class="card overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-100 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th class="p-4">Device</th><th class="p-4">Best for</th><th class="p-4">kWh saved / yr</th><th class="p-4">CO₂ avoided / yr</th><th class="p-4">Cost</th><th class="p-4">Ease</th></tr></thead><tbody id="devTbl"></tbody></table></div></div>
+  <div class="mt-24"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">Smart Buying Guide</h3><div id="devGuide" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div></div>
+  <div class="mt-16 rounded-2xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 p-6 text-sm text-yellow-900 dark:text-yellow-100"><b><i class="fa-solid fa-scale-balanced"></i> The smart-device trade-off:</b> every connected gadget uses a little standby power (often 1–3 W) and carries manufacturing emissions and e-waste. Buy only what you will really use, start with the biggest energy users like cooling and lighting, and use devices for years.</div>
+</div></section>
+
+<!-- IMPACT -->
+<section id="impact" class="tab py-20 sm:py-24"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="text-center max-w-2xl mx-auto mb-12"><h2 class="h2 mb-4">The Data Speaks</h2><p class="mut">Small changes applied at scale create a monumental environmental impact.</p></div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="card p-8 flex flex-col justify-center">
+      <div class="w-12 h-12 bg-eco-100 dark:bg-eco-900/40 rounded-xl flex items-center justify-center text-eco-600 mb-6 text-2xl"><i class="fa-solid fa-leaf"></i></div>
+      <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">The Path to Net Zero</h3>
+      <p class="mut mb-4 text-sm leading-relaxed">Buildings account for a large share of global greenhouse gas emissions. Smart, connected devices offer an immediate, actionable fix.</p>
+      <p class="mut text-sm leading-relaxed">By automating climate control, lighting and standby power, a household can avoid several hundred kilograms of CO₂ every year.</p>
+    </div>
+    <div class="card p-6 lg:col-span-2"><h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Typical Annual Energy Savings (kWh)</h3><div class="relative h-64"><canvas id="bar"></canvas></div></div>
+    <div class="card p-6 lg:col-span-3 flex flex-col md:flex-row items-center gap-8">
+      <div class="w-full md:w-1/2 relative h-64"><canvas id="pie"></canvas></div>
+      <div class="w-full md:w-1/2"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">Where Does the Energy Go?</h3>
+        <p class="mut mb-4">Heating and cooling dominate household energy use.</p>
+        <p class="mut">That is why <b class="text-slate-900 dark:text-white">Smart Thermostats</b> and <b class="text-slate-900 dark:text-white">Energy Monitors</b> give the best return for eco-conscious homes.</p></div>
+    </div>
+    <div class="card p-6 lg:col-span-2"><h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Global Temperature Rise</h3><p class="text-xs text-slate-500 mb-4">Approximate decade averages, °C vs 1951–1980 (NASA)</p><div class="relative h-64"><canvas id="tmp"></canvas></div></div>
+    <div class="card p-6"><h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Emissions by Sector</h3><p class="text-xs text-slate-500 mb-4">Approximate global share, %</p><div class="relative h-64"><canvas id="sec"></canvas></div></div>
+    <div class="card p-8 lg:col-span-3"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Why Every Half-Degree Matters</h3><p class="mut mb-6">IPCC findings comparing 1.5°C and 2°C of warming:</p>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-5"><i class="fa-solid fa-fish text-sky-500 text-2xl mb-2"></i><p class="font-bold text-slate-900 dark:text-white">Coral reefs</p><p class="text-sm mut mt-1">Lose roughly 70–90% at 1.5°C, but more than 99% at 2°C.</p></div>
+        <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-5"><i class="fa-solid fa-snowflake text-sky-400 text-2xl mb-2"></i><p class="font-bold text-slate-900 dark:text-white">Arctic summer ice</p><p class="text-sm mut mt-1">Ice-free about once a century at 1.5°C, at least once a decade at 2°C.</p></div>
+        <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-5"><i class="fa-solid fa-sun text-orange-500 text-2xl mb-2"></i><p class="font-bold text-slate-900 dark:text-white">Extreme heat</p><p class="text-sm mut mt-1">Hundreds of millions more people face severe heat exposure at 2°C.</p></div>
+      </div><p class="text-xs text-slate-500 mt-4">Figures are rounded; see IPCC, NASA and NOAA for current data.</p></div>
+  </div>
+</div></section>
+
+<!-- ACTION -->
+<section id="action" class="tab py-20 sm:py-24"><div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <div>
+      <h2 class="h2 mb-4">Eco-Habits Checklist</h2>
+      <p class="mut mb-4">Tick items as you complete them. Your progress is saved on this device.</p>
+      <div class="mb-6"><div class="flex justify-between text-sm font-semibold mb-1"><span>Progress</span><span id="ckPct">0%</span></div><div class="h-2 rounded bg-slate-200 dark:bg-slate-800"><div id="ckBar" class="h-2 rounded bg-eco-500 transition-all" style="width:0"></div></div></div>
+      <div id="ckList" class="space-y-4"></div>
+    </div>
+    <div class="relative w-full aspect-square md:aspect-auto md:h-[500px] rounded-3xl overflow-hidden shadow-xl border-4 border-white dark:border-slate-800 bg-eco-200">
+      <img src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=800&q=80" alt="Sustainable future" class="w-full h-full object-cover">
+      <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-900/90 to-transparent"><h3 class="text-white text-2xl font-bold mb-2">Every Watt Counts</h3><p class="text-slate-200 text-sm">When millions of households make micro-adjustments, the global reduction in greenhouse gases is staggering.</p></div>
+    </div>
+  </div>
+  <div class="card p-8 mt-20"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2"><i class="fa-solid fa-calculator text-eco-600"></i> Home Carbon Calculator</h3>
+    <p class="mut text-sm mb-6">Enter your monthly electricity use (see your bill). Uses about 0.71 kg CO₂ per kWh, a rough India grid average.</p>
+    <div class="grid md:grid-cols-4 gap-6 items-end">
+      <div><label class="text-xs font-semibold uppercase text-slate-500">Monthly units (kWh)</label><input id="cK" type="number" min="0" value="200" oninput="calc()" class="inp mt-1"></div>
+      <div class="text-center"><p class="text-3xl font-extrabold text-slate-900 dark:text-white"><span id="cY">0</span></p><p class="text-xs text-slate-500">kg CO₂ per year</p></div>
+      <div class="text-center"><p class="text-3xl font-extrabold text-eco-600"><span id="cS">0</span></p><p class="text-xs text-slate-500">kg saved with a 15% cut</p></div>
+      <div class="text-center"><p class="text-3xl font-extrabold text-eco-600"><span id="cT">0</span></p><p class="text-xs text-slate-500">trees' yearly absorption (~21 kg each)</p></div>
+    </div></div>
+</div></section>
+
+<!-- SURVEY (registered users only) -->
+<section id="survey" class="tab py-20 sm:py-24"><div class="max-w-3xl mx-auto px-4 sm:px-6">
+  <div class="text-center mb-10"><h2 class="h2 mb-3">Your Eco-Habits Survey</h2><p class="mut">Six quick questions to measure your climate-friendly habits and get personal tips.</p></div>
+  <div id="svBody"></div>
+</div></section>
+
+<!-- AUTH -->
+<section id="auth" class="tab py-20 sm:py-24"><div class="max-w-md mx-auto px-4">
+  <div id="authNote" class="hidden mb-4 p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-sm font-medium"></div>
+  <div id="profile" class="hidden card p-8 text-center shadow-xl">
+    <div class="w-16 h-16 mx-auto rounded-full bg-eco-600 text-white flex items-center justify-center text-2xl mb-3"><i class="fa-solid fa-user"></i></div>
+    <h2 id="pName" class="text-2xl font-bold text-slate-900 dark:text-white"></h2><p id="pMail" class="text-sm text-slate-500 mb-6"></p>
+    <button onclick="go('survey')" class="btn w-full mb-3">Eco Survey</button>
+    <button onclick="logout()" class="w-full py-3 rounded-full border border-slate-300 dark:border-slate-700 font-semibold">Log out</button>
+  </div>
+  <div id="authBox" class="card shadow-xl p-8">
+    <div id="tabsAuth" class="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-6 text-sm font-semibold">
+      <button id="tLogin" onclick="authMode('login')" class="flex-1 py-2 rounded-lg">Sign In</button>
+      <button id="tReg" onclick="authMode('register')" class="flex-1 py-2 rounded-lg">Register</button>
+    </div>
+    <form id="authForm" onsubmit="authSubmit(event)" class="space-y-4">
+      <input id="aName" class="inp" placeholder="Full name" autocomplete="name">
+      <input id="aMail" type="email" required class="inp" placeholder="Email" autocomplete="email">
+      <input id="aPass" type="password" required minlength="6" class="inp" placeholder="Password (min 6 characters)" autocomplete="current-password">
+      <button id="aBtn" class="btn w-full !rounded-xl">Sign In</button>
+    </form>
+  </div>
+</div></section>
+</main>
+
+<footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 mt-auto"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-8">
+    <div class="space-y-4"><div class="flex items-center gap-2 text-white"><div class="w-8 h-8 rounded bg-eco-600 flex items-center justify-center"><i class="fa-solid fa-earth-americas text-sm"></i></div><span class="font-bold text-lg">EcoSmart</span></div>
+      <p class="text-sm">Minimizing carbon footprints through accessible, intelligent home technology.</p></div>
+    <div><h4 class="text-white font-semibold mb-4">Location</h4><ul class="space-y-2 text-sm">
+      <li class="flex gap-2"><i class="fa-solid fa-location-dot mt-1 text-eco-500"></i><span>Taj East Gate Road, Phase 2<br>Agra, Uttar Pradesh 282001<br>India</span></li>
+      <li><i class="fa-solid fa-envelope text-eco-500"></i> contact@ecosmart.in</li></ul></div>
+    <div><h4 class="text-white font-semibold mb-4">Newsletter</h4><p class="text-sm mb-3">Get the latest eco-tips and tech news.</p>
+      <form onsubmit="event.preventDefault();fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:this.querySelector('input').value})}).catch(()=>{});this.reset();this.nextElementSibling.classList.remove('hidden')" class="flex"><input type="email" required placeholder="Email address" class="bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-l-lg w-full text-sm outline-none"><button class="bg-eco-600 hover:bg-eco-500 text-white px-3 rounded-r-lg text-sm font-semibold">Join</button></form>
+      <p class="hidden text-eco-400 text-xs mt-2">Thanks for subscribing!</p></div>
+    <div><h4 class="text-white font-semibold mb-4">Follow Us</h4><div class="flex space-x-3">
+      <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-instagram"></i></a>
+      <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-x-twitter"></i></a>
+      <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-linkedin-in"></i></a></div></div>
+  </div>
+  <div class="border-t border-slate-800 pt-8 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center gap-2"><p>&copy; 2026 EcoSmart Initiative. All rights reserved.</p><p>Weather &amp; AQI data: Open-Meteo</p></div>
+</div></footer>
+
+<script>
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const store={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- loader / theme ---------- */
+addEventListener('load',()=>setTimeout(()=>{$('loader').classList.add('gone');setTimeout(()=>$('loader').style.display='none',500)},1200));
+if(localStorage.theme==='dark'||(!('theme' in localStorage)&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');
+document.querySelectorAll('.themebtn').forEach(b=>b.onclick=()=>{const d=document.documentElement.classList.toggle('dark');try{localStorage.theme=d?'dark':'light'}catch(e){}
+  if(charts.length&&$('impact').classList.contains('on')){killCharts();initCharts()}});
+document.querySelectorAll('img').forEach(i=>i.addEventListener('error',()=>{i.style.visibility='hidden'}));
+
+/* ---------- nav & tabs ---------- */
+const TABS=[['home','Home'],['learn','Learn'],['devices','Devices'],['impact','Impact'],['action','Action'],['survey','Survey']];
+$('dnav').innerHTML=TABS.map(t=>`<button class="nl" data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('');
+$('mnav').innerHTML=TABS.concat([['auth','Account']]).map(t=>`<button class="nl block w-full text-left px-4 py-3 rounded-lg text-base" data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('');
+let pending=null,charts=[],chartsOn=false;
+function go(id){
+  if(id==='survey'&&!getUser()){pending='survey';id='auth';note('Please register (or sign in) to take the survey.');authMode('register')}
+  if(id==='auth')refreshAuth();
+  if(id==='survey')renderSurvey();
+  document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id===id));
+  document.querySelectorAll('.nl').forEach(n=>n.classList.toggle('on',n.dataset.t===id));
+  $('mm').classList.remove('open');scrollTo({top:0,behavior:'smooth'});
+  if(id==='impact'&&!chartsOn){chartsOn=true;setTimeout(initCharts,100)}
+}
+document.querySelector('.nl[data-t=home]').classList.add('on');
+
+/* ---------- devices (climate-relevant only) ---------- */
+const DEV=[
+['Smart Thermostat','Climate Control','https://res.cloudinary.com/dbkbadq4w/image/upload/q_auto,w_1536,c_limit,f_auto/MST_07_Blog_lifestyle02_384x280_d352e4b4cb','fa-temperature-half','Up to 15% Savings','Learns your routine and uses geofencing to adjust temperatures while you are away, cutting HVAC waste.'],
+['Smart LED Bulbs','Lighting Efficiency','https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=600&q=80','fa-lightbulb','75% Less Energy','Efficient LEDs that follow daylight and occupancy, so no light burns in an empty room.'],
+['Smart Plugs','Vampire Power Fix','https://images.unsplash.com/photo-1558002038-1055907df827?w=600&q=80','fa-plug','Stop Phantom Drain','Cut power to devices on standby, which can account for around 10% of home energy use.'],
+['Energy Monitor','Data Tracking','https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80','fa-chart-pie','Real-time Audits','Shows which appliances waste the most electricity so you can fix the biggest leaks first.'],
+['Smart EV Charger','Off-Peak Charging','https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80','fa-car-battery','Grid Stabilization','Schedules charging for hours when demand is low and renewable energy is plentiful.']];
+$('devGrid').innerHTML=DEV.map(d=>`<div class="flip w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]"><div class="flip-in">
+<div class="ff"><img src="${d[2]}" alt="${d[0]}" loading="lazy"><div class="ffc"><h3 class="text-lg font-bold text-slate-900 dark:text-white">${d[0]}</h3><p class="text-eco-600 dark:text-eco-400 text-sm font-medium">${d[1]}</p></div></div>
+<div class="fb"><i class="fa-solid ${d[3]} text-3xl mb-3 text-eco-200"></i><h4 class="font-bold text-lg mb-2">${d[4]}</h4><p class="text-sm text-eco-50">${d[5]}</p></div></div></div>`).join('');
+
+/* ---------- checklist (persisted) ---------- */
+const CK=[['Conduct an Energy Audit','Find old bulbs, drafty windows and appliances that stay plugged in 24/7.'],['Install Smart LEDs','Replace the 5 most-used lights with smart, dimmable LEDs.'],['Set Up HVAC Geofencing','Link your thermostat to your phone so it enters Eco Mode when nobody is home.'],['Automate Vampire Drains','Put your entertainment centre or home office on a smart plug that turns off at midnight.']];
+let ckDone=store.get('eco_ck',[]);
+function drawCk(){$('ckList').innerHTML=CK.map((c,i)=>`<div class="ck card flex items-start gap-4 p-5 cursor-pointer hover:shadow-md ${ckDone.includes(i)?'done':''}" onclick="tick(${i})"><div class="cb mt-0.5 w-6 h-6 rounded-md border-2 border-slate-300 dark:border-slate-600 shrink-0 flex items-center justify-center"><i class="fa-solid fa-check ci text-sm text-white"></i></div><div><h4 class="ct font-bold text-slate-800 dark:text-slate-100">${c[0]}</h4><p class="text-slate-500 dark:text-slate-400 text-sm mt-1">${c[1]}</p></div></div>`).join('');
+  const p=Math.round(ckDone.length/CK.length*100);$('ckPct').textContent=p+'%';$('ckBar').style.width=p+'%'}
+function tick(i){ckDone=ckDone.includes(i)?ckDone.filter(x=>x!==i):ckDone.concat(i);store.set('eco_ck',ckDone);drawCk()}
+drawCk();
+
+/* ---------- charts ---------- */
+function killCharts(){charts.forEach(c=>c.destroy());charts=[]}
+function initCharts(){initCharts2();
+  const dk=document.documentElement.classList.contains('dark'),tx=dk?'#94a3b8':'#475569',gr=dk?'#334155':'#e2e8f0';
+  charts.push(new Chart($('bar'),{type:'bar',data:{labels:['Thermostat','LED Bulbs','EV Charger','Smart Plugs','Energy Monitor','Inverter AC','Solar (per kW)','Geyser Timer'],datasets:[{label:'Avg kWh saved annually',data:[850,450,1200,200,300,600,1400,250],backgroundColor:'#16a34a',borderRadius:4,barPercentage:.6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tx},grid:{display:false}},y:{ticks:{color:tx},grid:{color:gr}}}}}));
+  charts.push(new Chart($('pie'),{type:'doughnut',data:{labels:['Heating & Cooling','Water Heating','Lighting','Electronics/Appliances','Other'],datasets:[{data:[47,14,10,20,9],backgroundColor:['#ef4444','#f97316','#eab308','#3b82f6','#8b5cf6'],borderWidth:2,borderColor:dk?'#0f172a':'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{color:tx,boxWidth:12}}}}}));
+}
+
+/* ---------- live weather + AQI (Open-Meteo, no API key) ---------- */
+const CITIES=[['Agra',27.1767,78.0081],['Delhi',28.6139,77.209],['Mumbai',19.076,72.8777],['Bengaluru',12.9716,77.5946],['Chennai',13.0827,80.2707],['Kolkata',22.5726,88.3639],['Hyderabad',17.385,78.4867],['Jaipur',26.9124,75.7873],['Lucknow',26.8467,80.9462],['London',51.5072,-0.1276],['New York',40.7128,-74.006],['Tokyo',35.6762,139.6503],['Sydney',-33.8688,151.2093]];
+$('wxCity').innerHTML=CITIES.map((c,i)=>`<option value="${i}">${c[0]}</option>`).join('');
+const WX=c=>c===0?['Clear sky','fa-sun']:c<=2?['Partly cloudy','fa-cloud-sun']:c===3?['Overcast','fa-cloud']:c<=48?['Fog','fa-smog']:c<=57?['Drizzle','fa-cloud-rain']:c<=67?['Rain','fa-cloud-showers-heavy']:c<=77?['Snow','fa-snowflake']:c<=82?['Rain showers','fa-cloud-showers-heavy']:c<=86?['Snow showers','fa-snowflake']:['Thunderstorm','fa-cloud-bolt'];
+const AQ=a=>a<=50?['Good','#16a34a','Air is clean – a great day to walk or cycle instead of driving.']:a<=100?['Moderate','#ca8a04','Acceptable air. Sensitive people should limit long outdoor exertion.']:a<=150?['Unhealthy for sensitive groups','#ea580c','Children and people with asthma should reduce time outdoors. Avoid burning waste.']:a<=200?['Unhealthy','#dc2626','Limit outdoor activity, use public transport and avoid adding to pollution.']:a<=300?['Very unhealthy','#9333ea','Stay indoors where possible; run air purifiers and avoid any burning.']:['Hazardous','#7f1d1d','Health emergency – stay indoors and avoid all outdoor exertion.'];
+let wxCur=null;
+async function wxLoad(lat,lon,name){
+  wxCur=[lat,lon,name];$('wxErr').classList.add('hidden');$('wxUpd').textContent='Updating…';
+  try{
+    const [w,a]=await Promise.allSettled([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`).then(r=>r.json()),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5,pm10&timezone=auto`).then(r=>r.json())]);
+    if(w.status!=='fulfilled'||!w.value.current)throw 0;
+    const c=w.value.current,[d,ic]=WX(c.weather_code);
+    $('wxName').textContent=name;$('wxT').textContent=Math.round(c.temperature_2m);$('wxFeel').textContent=Math.round(c.apparent_temperature);
+    $('wxDesc').textContent=d;$('wxIcon').className='fa-solid '+ic+' text-5xl';$('wxHum').textContent=Math.round(c.relative_humidity_2m);$('wxWind').textContent=Math.round(c.wind_speed_10m);
+    let tip='Live air-quality data is unavailable for this location right now.';
+    if(a.status==='fulfilled'&&a.value.current&&a.value.current.us_aqi!=null){
+      const q=a.value.current,[l,col,t]=AQ(q.us_aqi);$('wxAqi').textContent=Math.round(q.us_aqi);$('wxAqiL').textContent=l;$('wxAqiBox').style.background=col;
+      $('wxPm25').textContent=q.pm2_5!=null?q.pm2_5.toFixed(1):'--';$('wxPm10').textContent=q.pm10!=null?q.pm10.toFixed(1):'--';tip=t;
+    }else{['wxAqi','wxAqiL','wxPm25','wxPm10'].forEach(i=>$(i).textContent='--');$('wxAqiBox').style.background='#64748b'}
+    if(c.temperature_2m>=35)tip+=' It is hot: set your AC to 24–26°C and use fans to save energy.';
+    $('wxTip').lastElementChild.textContent=tip;$('wxUpd').textContent='Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+' · refreshes every 10 min';
+    store.set('eco_city',[lat,lon,name]);
+  }catch(e){$('wxErr').textContent='Could not load live data. Check your internet connection and try again.';$('wxErr').classList.remove('hidden');$('wxUpd').textContent='Offline'}
+}
+$('wxCity').onchange=()=>{const c=CITIES[$('wxCity').value];wxLoad(c[1],c[2],c[0])};
+async function wxSearch(){const q=$('wxQ').value.trim();if(!q)return;
+  try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1`).then(r=>r.json());
+    if(!r.results)throw 0;const p=r.results[0];wxLoad(p.latitude,p.longitude,p.name+(p.country?', '+p.country:''));$('wxQ').value=''}
+  catch(e){$('wxErr').textContent='City not found. Try another spelling.';$('wxErr').classList.remove('hidden')}}
+function wxLocate(){if(!navigator.geolocation){$('wxErr').textContent='Location is not supported by this browser.';$('wxErr').classList.remove('hidden');return}
+  navigator.geolocation.getCurrentPosition(p=>wxLoad(p.coords.latitude,p.coords.longitude,'Your location'),()=>{$('wxErr').textContent='Location permission denied. Pick a city instead.';$('wxErr').classList.remove('hidden')})}
+(function(){const s=store.get('eco_city',null);const i=s?CITIES.findIndex(c=>c[0]===s[2]):-1;
+  if(s){if(i>=0)$('wxCity').value=i;wxLoad(s[0],s[1],s[2])}else wxLoad(CITIES[0][1],CITIES[0][2],'Agra')})();
+setInterval(()=>wxCur&&wxLoad(...wxCur),600000);
+
+/* ---------- accounts (browser-only demo; passwords hashed, stored in localStorage) ---------- */
+let mode='login';
+function authMode(m){mode=m;$('aName').style.display=m==='register'?'':'none';$('aName').required=m==='register';$('aBtn').textContent=m==='register'?'Create Account':'Sign In';
+  $('aPass').autocomplete=m==='register'?'new-password':'current-password';
+  [['tLogin','login'],['tReg','register']].forEach(([id,k])=>{$(id).className='flex-1 py-2 rounded-lg '+(k===m?'bg-white dark:bg-slate-700 shadow text-eco-700 dark:text-eco-400':'')})}
+function note(t){$('authNote').textContent=t;$('authNote').classList.remove('hidden')}
+let me=null;
+const tok=()=>{try{return localStorage.getItem('eco_token')}catch(e){return null}};
+async function api(path,opts={}){const r=await fetch('/api'+path,{...opts,headers:{'Content-Type':'application/json',...(tok()&&{Authorization:'Bearer '+tok()})}});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
+async function authSubmit(e){e.preventDefault();const b=$('aBtn');b.disabled=true;
+  try{const d=await api(mode==='register'?'/register':'/login',{method:'POST',body:JSON.stringify({name:$('aName').value.trim(),email:$('aMail').value.trim(),password:$('aPass').value})});
+    localStorage.setItem('eco_token',d.token);me=d.user;$('authForm').reset();$('authNote').classList.add('hidden');
+    const t=pending||'home';pending=null;refreshAuth();go(t)}
+  catch(err){note(err.message);if(/register first/.test(err.message))authMode('register');if(/already registered/.test(err.message))authMode('login')}
+  b.disabled=false}
+function logout(){try{localStorage.removeItem('eco_token')}catch(e){}me=null;refreshAuth();go('home')}
+function refreshAuth(){const u=getUser();
+  document.querySelectorAll('.acct').forEach(a=>a.textContent=u?u.name.split(' ')[0]:'Account');
+  $('profile').classList.toggle('hidden',!u);$('authBox').classList.toggle('hidden',!!u);
+  if(u){$('pName').textContent=u.name;$('pMail').textContent=u.email;$('authNote').classList.add('hidden')}else authMode(mode)}
+authMode('login');refreshAuth();
+(async()=>{if(tok()){try{me=(await api('/me')).user}catch(e){try{localStorage.removeItem('eco_token')}catch(x){}}refreshAuth()}})();
+
+/* ---------- survey ---------- */
+const QS=[
+['How do you usually cool or heat your home?',[['AC at very low temperatures most of the day',0],['AC at 24–26°C, only when needed',2],['Fans and natural ventilation first',3]],'Set your AC to 24–26°C – every extra degree saves roughly 6% energy.'],
+['What lighting do you mostly use?',[['Old incandescent bulbs / tube lights',0],['A mix of LED and older lights',1],['Almost all LED (or smart LED)',3]],'Swap your most-used lights for LEDs – they use up to 75% less energy.'],
+['What do you do with devices on standby?',[['Leave them plugged in',0],['Switch off sometimes',1],['Switch off at the socket or use smart plugs',3]],'Standby devices can waste around 10% of home electricity. Use a smart plug with a schedule.'],
+['How do you mostly travel?',[['Petrol/diesel vehicle, usually alone',0],['Electric vehicle or carpool',2],['Walk, cycle or public transport',3]],'Replace one short car trip a week with walking, cycling or public transport.'],
+['Do you track your electricity use?',[['Never',0],['Only when I see the bill',1],['Regularly, with a meter or app',3]],'An energy monitor shows which appliances waste the most power.'],
+['Do you use renewable energy at home?',[['No, and no plans',0],['Planning to (solar, green tariff)',1],['Yes, rooftop solar or green power',3]],'Look into rooftop solar or a green-energy plan from your electricity provider.']];
+async function renderSurvey(){
+  const u=getUser();if(!u)return;const el=$('svBody');let r=null;try{r=(await api('/survey')).result}catch(e){}
+  if(r){
+    const lv=r.pct>=75?['Eco Champion','🌿']:r.pct>=45?['On the Right Track','🌱']:['Getting Started','🌍'];
+    const tips=QS.map((q,i)=>r.a[i]<=1?q[2]:null).filter(Boolean);
+    el.innerHTML=`<div class="card p-8 text-center shadow-lg"><p class="text-5xl">${lv[1]}</p><h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">${lv[0]}, ${u.name.split(' ')[0]}!</h3>
+    <p class="text-6xl font-extrabold text-eco-600 mt-4">${r.pct}%</p><p class="text-sm text-slate-500">Eco score (${r.score}/${QS.length*3})</p>
+    <div class="h-3 rounded bg-slate-200 dark:bg-slate-800 my-6"><div class="h-3 rounded bg-eco-500" style="width:${r.pct}%"></div></div>
+    ${r.interest?`<p class="text-sm mut mb-4">Device you are most interested in: <b>${r.interest}</b></p>`:''}
+    <div class="text-left space-y-2 mb-6">${tips.length?'<h4 class="font-bold text-slate-900 dark:text-white">Your personal tips</h4>'+tips.map(t=>`<p class="text-sm mut"><i class="fa-solid fa-leaf text-eco-500"></i> ${t}</p>`).join(''):'<p class="mut text-sm">Fantastic – you are already following great habits. Keep inspiring others!</p>'}</div>
+    <button onclick="retake()" class="btn">Retake survey</button></div>`;return}
+  el.innerHTML=`<form onsubmit="svSubmit(event)" class="space-y-5">${QS.map((q,i)=>`<fieldset class="card p-6"><legend class="sr-only">${q[0]}</legend><p class="font-bold text-slate-900 dark:text-white mb-3">${i+1}. ${q[0]}</p>
+    <div class="space-y-2">${q[1].map(o=>`<label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-eco-50 dark:hover:bg-slate-800"><input type="radio" name="q${i}" value="${o[1]}" required class="accent-green-600"><span class="text-sm">${o[0]}</span></label>`).join('')}</div></fieldset>`).join('')}
+    <fieldset class="card p-6"><p class="font-bold text-slate-900 dark:text-white mb-3">7. Which smart device interests you most? <span class="font-normal text-slate-500">(optional)</span></p>
+    <select name="interest" class="inp"><option value="">— Select —</option>${DEV.map(d=>`<option>${d[0]}</option>`).join('')}</select></fieldset>
+    <button class="btn w-full !rounded-xl">Submit &amp; see my score</button></form>`}
+async function svSubmit(e){e.preventDefault();const f=e.target,a=QS.map((q,i)=>+f['q'+i].value);
+  try{await api('/survey',{method:'POST',body:JSON.stringify({a,interest:f.interest.value})});renderSurvey();scrollTo({top:0,behavior:'smooth'})}catch(err){alert(err.message)}}
+async function retake(){try{await api('/survey',{method:'DELETE'})}catch(e){}renderSurvey()}
+/* ---------- learn tab, extra charts, calculator ---------- */
+const ic=(i,c)=>`<i class="fa-solid ${i} ${c||'text-eco-600'}"></i>`;
+$('lnGh').innerHTML=[['fa-sun','1. Sunlight arrives','Solar energy passes through the atmosphere and warms the surface of Earth.'],['fa-layer-group','2. Gases trap heat','CO₂, methane and other greenhouse gases absorb heat that Earth radiates back.'],['fa-temperature-arrow-up','3. The planet warms','More gases trap more heat, so temperatures keep climbing.']].map(g=>`<div class="card p-8 text-center"><div class="w-14 h-14 mx-auto rounded-2xl bg-eco-100 dark:bg-eco-900/40 flex items-center justify-center text-2xl mb-4">${ic(g[0])}</div><h4 class="font-bold text-slate-900 dark:text-white mb-2">${g[1]}</h4><p class="text-sm mut">${g[2]}</p></div>`).join('');
+const li=a=>a.map(t=>`<li class="flex gap-3">${ic('fa-circle-check','text-eco-500 mt-1')}<span>${t}</span></li>`).join('');
+$('lnCa').innerHTML=li(['Burning coal, oil and gas for electricity, transport and industry.','Deforestation, which removes trees that absorb carbon.','Agriculture: methane from livestock and rice, nitrous oxide from fertilisers.','Cement and steel production.','Waste in landfills releasing methane.']);
+$('lnEf').innerHTML=li(['More frequent and intense heatwaves.','Erratic rainfall, floods and droughts.','Melting glaciers and rising sea levels.','Warmer, more acidic oceans harming coral reefs.','Pressure on food, water security and health.']);
+$('lnMy').innerHTML=[['“It is just natural climate cycles.”','Natural factors cannot explain the current rapid warming. The rise closely tracks fossil-fuel emissions, and the extra carbon in the air carries a fossil-fuel signature.'],['“A cold day proves warming is false.”','Weather is daily variation; climate is the long-term average. Records show hot extremes are becoming more common while cold extremes are becoming rarer.'],['“My actions are too small to matter.”','Households and their consumption drive a large share of emissions. Individual choices add up and also influence neighbours, markets and policy.'],['“Clean energy is too expensive.”','In many regions solar and wind are now among the cheapest sources of new electricity.']].map(m=>`<details class="card p-5 group"><summary class="cursor-pointer font-semibold text-slate-900 dark:text-white flex justify-between items-center">${m[0]}<i class="fa-solid fa-chevron-down text-xs group-open:rotate-180 transition-transform"></i></summary><p class="mut text-sm mt-3"><b class="text-eco-600">Fact:</b> ${m[1]}</p></details>`).join('');
+$('lnDo').innerHTML=[['fa-bolt','Save energy','Use efficient appliances and LEDs, and set your AC to 24–26°C.'],['fa-bus','Travel smarter','Walk, cycle, share rides or use public transport.'],['fa-utensils','Waste less food','Plan meals, eat more plant-based food and avoid food waste.'],['fa-recycle','Reduce and reuse','Repair, reuse and recycle to cut manufacturing emissions.'],['fa-tree','Protect nature','Plant native trees and protect local green spaces.'],['fa-bullhorn','Spread awareness','Talk to family, friends and your community.']].map(d=>`<div class="card p-8"><div class="w-12 h-12 rounded-xl bg-eco-100 dark:bg-eco-900/40 flex items-center justify-center text-xl mb-4">${ic(d[0])}</div><h4 class="font-bold text-slate-900 dark:text-white mb-2">${d[1]}</h4><p class="text-sm mut">${d[2]}</p></div>`).join('');
+function initCharts2(){const dk=document.documentElement.classList.contains('dark'),tx=dk?'#94a3b8':'#475569',gr=dk?'#334155':'#e2e8f0';
+  charts.push(new Chart($('tmp'),{type:'line',data:{labels:['1900s','1920s','1940s','1960s','1980s','2000s','2010s','2020s'],datasets:[{label:'°C anomaly',data:[-0.3,-0.2,0,0,0.25,0.6,0.8,1.0],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.15)',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tx},grid:{display:false}},y:{ticks:{color:tx},grid:{color:gr}}}}}));
+  charts.push(new Chart($('sec'),{type:'doughnut',data:{labels:['Electricity & heat','Agriculture & land use','Industry','Transport','Buildings','Other'],datasets:[{data:[30,22,21,15,7,5],backgroundColor:['#ef4444','#16a34a','#f97316','#3b82f6','#eab308','#8b5cf6'],borderWidth:2,borderColor:dk?'#0f172a':'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:tx,boxWidth:10,font:{size:10}}}}}}))}
+function calc(){const k=+$('cK').value||0,y=k*12*0.71,s=y*0.15;$('cY').textContent=Math.round(y).toLocaleString();$('cS').textContent=Math.round(s).toLocaleString();$('cT').textContent=Math.round(s/21)}calc();
+/* ---------- richer devices section ---------- */
+DEV.push(['Rooftop Solar','Clean Generation','','fa-solar-panel','Make Your Own Power','Rooftop panels with an app-based monitor replace grid power with sunshine, one of the biggest cuts in home emissions.'],
+['Inverter AC (5-star)','Efficient Cooling','','fa-snowflake','30–40% Less Power','BEE 5-star inverter ACs vary compressor speed instead of switching on and off. Pair with a 24–26°C setting.'],
+['Smart Geyser Timer','Water Heating','','fa-fire-flame-simple','Heat Only When Needed','A timer or smart switch heats water just before use, avoiding hours of idle reheating.']);
+const DX={'Smart Thermostat':[850,'Medium','Easy','Cooling & heating'],'Smart LED Bulbs':[450,'Low','Easy','Lighting'],'Smart Plugs':[200,'Low','Easy','Standby power'],'Energy Monitor':[300,'Medium','Moderate','Finding waste'],'Smart EV Charger':[1200,'High','Moderate','Electric vehicles'],'Rooftop Solar':[1400,'High','Hard','Clean power (per kW)'],'Inverter AC (5-star)':[600,'High','Easy','Cooling'],'Smart Geyser Timer':[250,'Low','Easy','Hot water']};
+let devF='All';
+function drawDev(){
+  $('devFilter').innerHTML=['All','Low','Medium','High'].map(f=>`<button onclick="devF='${f}';drawDev()" class="px-5 py-2 rounded-full text-sm font-semibold border ${f===devF?'bg-eco-600 text-white border-eco-600':'border-slate-300 dark:border-slate-700 hover:border-eco-500'}">${f==='All'?'All devices':f+' cost'}</button>`).join('');
+  $('devGrid').innerHTML=DEV.filter(d=>devF==='All'||DX[d[0]][1]===devF).map(d=>{const x=DX[d[0]];
+    const front=d[2]?`<img src="${d[2]}" alt="${d[0]}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="h-[65%] bg-gradient-to-br from-eco-400 to-teal-700 flex items-center justify-center text-white text-6xl"><i class="fa-solid ${d[3]}"></i></div>`;
+    return `<div class="flip w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]"><div class="flip-in"><div class="ff">${front}<div class="ffc"><h3 class="text-lg font-bold text-slate-900 dark:text-white">${d[0]}</h3><p class="text-eco-600 dark:text-eco-400 text-sm font-medium">${d[1]}</p></div></div>
+    <div class="fb"><i class="fa-solid ${d[3]} text-3xl mb-2 text-eco-200"></i><h4 class="font-bold text-lg mb-2">${d[4]}</h4><p class="text-sm text-eco-50">${d[5]}</p><p class="text-xs mt-3 bg-white/20 rounded-full px-3 py-1">≈ ${x[0].toLocaleString()} kWh · ${Math.round(x[0]*.71)} kg CO₂ / yr</p><p class="text-xs mt-2 opacity-80">${x[1]} cost · ${x[2]} to set up</p></div></div></div>`}).join('')}
+drawDev();
+const cc={Low:'text-green-600',Medium:'text-yellow-600',High:'text-red-600'};
+$('devTbl').innerHTML=DEV.map(d=>{const x=DX[d[0]];return `<tr class="border-t border-slate-200 dark:border-slate-800"><td class="p-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap"><i class="fa-solid ${d[3]} text-eco-600 mr-2"></i>${d[0]}</td><td class="p-4 mut">${x[3]}</td><td class="p-4">${x[0].toLocaleString()}</td><td class="p-4 font-semibold text-eco-600">${Math.round(x[0]*.71)} kg</td><td class="p-4 font-semibold ${cc[x[1]]}">${x[1]}</td><td class="p-4 mut">${x[2]}</td></tr>`}).join('');
+$('devGuide').innerHTML=[['fa-star','Check the star label','Choose BEE-rated appliances; more stars mean lower running cost and emissions.'],['fa-bullseye','Target big users first','Cooling, water heating and lighting usually matter more than small gadgets.'],['fa-wifi','Prefer open standards','Look for Matter or Zigbee support so devices keep working without one brand’s cloud.'],['fa-recycle','Buy once, use long','Choose durable products and recycle old electronics responsibly.']].map(g=>`<div class="card p-6"><i class="fa-solid ${g[0]} text-eco-600 text-2xl mb-3"></i><h4 class="font-bold text-slate-900 dark:text-white mb-2">${g[1]}</h4><p class="text-sm mut">${g[2]}</p></div>`).join('');
+</script>
+</body>
+</html>
