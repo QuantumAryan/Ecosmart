@@ -74,7 +74,7 @@ async function notify(u, kind) { // never blocks or breaks sign-in if email fail
   const subject = reg ? 'Welcome to EcoSmart – registration successful' : 'EcoSmart – you signed in successfully';
   const line = reg ? `Your EcoSmart account was created successfully on ${when}. Thank you for joining us in the fight against climate change!`
                    : `You signed in to EcoSmart successfully on ${when}. If this was not you, please contact leave.ecosmart@gmail.com right away.`;
-  const text = `Hi ${name},\n\n${line}\n\nEcoSmart – North Rampuri, Muzaffarnagar 251002`;
+  const text = `Hi ${name},\n\n${line}\n\nEcoSmart – Lovely Professional University, Phagwara, Punjab 144411`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px"><h2 style="color:#16a34a;margin:0 0 8px">🌿 EcoSmart</h2><p>Hi ${name},</p><p>${esc(line)}</p><p style="color:#64748b;font-size:13px">EcoSmart – North Rampuri, Muzaffarnagar 251002</p></div>`;
   try { await Promise.race([sendMail(u.email, subject, text, html), new Promise((_, rej) => setTimeout(() => rej(new Error('mail timeout')), 8000))]); }
   catch (e) { console.error('Mail error:', e.message); }
