@@ -74,6 +74,12 @@ async function sendCode(u) {
   await mail(u.email, u.name, code);
   return true;
 }
+function mailErr(e) {
+  if (/not configured/i.test(e.message)) return 'The email service is not set up on the server yet (SMTP_USER / SMTP_PASS missing).';
+  if (e.code === 'EAUTH' || /Invalid login|Username and Password/i.test(e.message)) return 'The server could not log in to Gmail. Check the Gmail App Password in SMTP_PASS.';
+  if (e.responseCode === 550 || e.code === 'EENVELOPE') return 'That email address was rejected. Please check it and try again.';
+  return 'Could not send the verification email. Please try again in a moment.';
+}
 async function domainOk(email) { // does the email domain really accept mail?
   const d = email.split('@')[1];
   try { const r = await dns.resolveMx(d); if (r && r.length) return true; } catch (e) { if (e.code !== 'ENODATA' && e.code !== 'ENOTFOUND') return true; }
@@ -96,7 +102,7 @@ app.post('/api/register', limiter, wrap(async (req, res) => {
   catch (e) {
     console.error('Mail error:', e.message);
     if (fresh) await pool.query('DELETE FROM users WHERE id=$1', [u.id]);
-    return res.status(502).json({ error: 'Could not send the verification email. Check the address and try again.' });
+    return res.status(502).json({ error: mailErr(e) });
   }
   res.json({ needsVerify: true, email: em });
 }));
@@ -121,7 +127,7 @@ app.post('/api/resend', limiter, wrap(async (req, res) => {
   const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1 AND verified=false', [em]);
   if (!u) return res.json({ ok: true, sent: true });
   try { res.json({ ok: true, sent: await sendCode(u) }); }
-  catch (e) { console.error('Mail error:', e.message); res.status(502).json({ error: 'Could not send the email. Please try again later.' }); }
+  catch (e) { console.error('Mail error:', e.message); res.status(502).json({ error: mailErr(e) }); }
 }));
 
 app.post('/api/login', limiter, wrap(async (req, res) => {
