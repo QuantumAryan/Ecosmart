@@ -3,6 +3,7 @@ const express = require('express'), path = require('path');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs'), jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
+const nodemailer = require('nodemailer'), crypto = require('crypto'), dns = require('dns').promises;
 
 if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) { console.error('Missing DATABASE_URL or JWT_SECRET in .env'); process.exit(1); }
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
@@ -41,33 +42,99 @@ async function init() {
       user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE, device TEXT NOT NULL,
       kind TEXT NOT NULL CHECK (kind IN ('using','plan')), PRIMARY KEY (user_id, device, kind));
     CREATE TABLE IF NOT EXISTS checklist (
-      user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, items INT[] NOT NULL DEFAULT '{}');`);
+      user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, items INT[] NOT NULL DEFAULT '{}');
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verified BOOLEAN NOT NULL DEFAULT TRUE;
+    ALTER TABLE users ALTER COLUMN verified SET DEFAULT FALSE;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_hash TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_expires TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_sent_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_attempts INT NOT NULL DEFAULT 0;`);
 }
 
-app.post('/api/register', limiter, async (req, res) => {
+const wrap = fn => (req, res, next) => fn(req, res, next).catch(e => { console.error(e); res.status(500).json({ error: 'Server error' }); });
+// ---------- email verification ----------
+const FROM = 'EcoSmart <' + (process.env.SMTP_USER || 'leave.ecosmart@gmail.com') + '>';
+let transporter = null;
+async function mail(to, name, code) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (process.env.NODE_ENV === 'production') throw new Error('Email service not configured');
+    console.log(`[DEV] Verification code for ${to}: ${code}`); return;
+  }
+  transporter = transporter || nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+  const safe = String(name).replace(/[<>&"]/g, '');
+  await transporter.sendMail({ from: FROM, to, subject: 'Your EcoSmart verification code',
+    text: `Hi ${safe},\n\nYour EcoSmart verification code is ${code}. It expires in 15 minutes.\n\nIf you did not sign up, ignore this email.\n\nEcoSmart – North Rampuri, Muzaffarnagar 251002`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px"><h2 style="color:#16a34a;margin:0 0 8px">🌍 EcoSmart</h2><p>Hi ${safe},</p><p>Use this code to confirm your email:</p><p style="font-size:34px;letter-spacing:8px;font-weight:bold;text-align:center;background:#f0fdf4;border-radius:12px;padding:16px;margin:16px 0">${code}</p><p style="color:#64748b;font-size:13px">The code expires in 15 minutes. If you did not sign up, you can ignore this email.</p></div>` });
+}
+const codeHash = (email, code) => crypto.createHmac('sha256', process.env.JWT_SECRET).update(email + ':' + code).digest('hex');
+async function sendCode(u) {
+  if (u.verify_sent_at && Date.now() - new Date(u.verify_sent_at).getTime() < 60000) return false; // 60s cooldown
+  const code = String(crypto.randomInt(100000, 1000000));
+  await pool.query("UPDATE users SET verify_hash=$1, verify_expires=now()+interval '15 minutes', verify_sent_at=now(), verify_attempts=0 WHERE id=$2", [codeHash(u.email, code), u.id]);
+  await mail(u.email, u.name, code);
+  return true;
+}
+async function domainOk(email) { // does the email domain really accept mail?
+  const d = email.split('@')[1];
+  try { const r = await dns.resolveMx(d); if (r && r.length) return true; } catch (e) { if (e.code !== 'ENODATA' && e.code !== 'ENOTFOUND') return true; }
+  try { const a = await dns.resolve4(d); return a.length > 0; } catch (e) { return !(e.code === 'ENODATA' || e.code === 'ENOTFOUND'); }
+}
+
+app.post('/api/register', limiter, wrap(async (req, res) => {
   const { name, email, password } = req.body || {};
   if (!name || !String(name).trim() || !isEmail(email) || typeof password !== 'string' || password.length < 6)
     return res.status(400).json({ error: 'Enter your name, a valid email and a password of 6+ characters' });
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    const { rows: [u] } = await pool.query('INSERT INTO users(name,email,password_hash) VALUES($1,$2,$3) RETURNING id,name,email',
-      [String(name).trim().slice(0, 100), email.toLowerCase(), hash]);
-    res.json({ token: sign(u), user: { name: u.name, email: u.email } });
-  } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'Email already registered – please sign in' });
-    console.error(e); res.status(500).json({ error: 'Server error' });
+  const em = email.toLowerCase();
+  if (!(await domainOk(em))) return res.status(400).json({ error: 'That email domain does not exist. Please check the address.' });
+  const hash = await bcrypt.hash(password, 10), nm = String(name).trim().slice(0, 100);
+  let u, fresh = false;
+  const { rows: [old] } = await pool.query('SELECT * FROM users WHERE email=$1', [em]);
+  if (old && old.verified) return res.status(409).json({ error: 'Email already registered – please sign in' });
+  if (old) { u = (await pool.query('UPDATE users SET name=$1, password_hash=$2 WHERE id=$3 RETURNING *', [nm, hash, old.id])).rows[0]; }
+  else { u = (await pool.query('INSERT INTO users(name,email,password_hash) VALUES($1,$2,$3) RETURNING *', [nm, em, hash])).rows[0]; fresh = true; }
+  try { await sendCode(u); }
+  catch (e) {
+    console.error('Mail error:', e.message);
+    if (fresh) await pool.query('DELETE FROM users WHERE id=$1', [u.id]);
+    return res.status(502).json({ error: 'Could not send the verification email. Check the address and try again.' });
   }
-});
+  res.json({ needsVerify: true, email: em });
+}));
 
-app.post('/api/login', limiter, async (req, res) => {
-  try {
-    const { email, password } = req.body || {};
-    const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1', [String(email || '').toLowerCase()]);
-    if (!u) return res.status(404).json({ error: 'No account found – please register first' });
-    if (!(await bcrypt.compare(String(password || ''), u.password_hash))) return res.status(401).json({ error: 'Incorrect password' });
-    res.json({ token: sign(u), user: { name: u.name, email: u.email } });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
-});
+app.post('/api/verify', limiter, wrap(async (req, res) => {
+  const em = String((req.body || {}).email || '').toLowerCase(), code = String((req.body || {}).code || '').trim();
+  const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1', [em]);
+  if (!u) return res.status(404).json({ error: 'No account found – please register first' });
+  if (u.verified) return res.status(400).json({ error: 'Email already verified – please sign in' });
+  if (!u.verify_hash || !u.verify_expires || new Date(u.verify_expires) < new Date()) return res.status(400).json({ error: 'Code expired – tap "Resend code"' });
+  if (u.verify_attempts >= 5) return res.status(429).json({ error: 'Too many wrong tries – request a new code' });
+  if (codeHash(em, code) !== u.verify_hash) {
+    await pool.query('UPDATE users SET verify_attempts=verify_attempts+1 WHERE id=$1', [u.id]);
+    return res.status(400).json({ error: 'Wrong code. Please check and try again.' });
+  }
+  await pool.query('UPDATE users SET verified=true, verify_hash=NULL, verify_expires=NULL WHERE id=$1', [u.id]);
+  res.json({ token: sign(u), user: { name: u.name, email: u.email } });
+}));
+
+app.post('/api/resend', limiter, wrap(async (req, res) => {
+  const em = String((req.body || {}).email || '').toLowerCase();
+  const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1 AND verified=false', [em]);
+  if (!u) return res.json({ ok: true, sent: true });
+  try { res.json({ ok: true, sent: await sendCode(u) }); }
+  catch (e) { console.error('Mail error:', e.message); res.status(502).json({ error: 'Could not send the email. Please try again later.' }); }
+}));
+
+app.post('/api/login', limiter, wrap(async (req, res) => {
+  const { email, password } = req.body || {};
+  const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1', [String(email || '').toLowerCase()]);
+  if (!u) return res.status(404).json({ error: 'No account found – please register first' });
+  if (!(await bcrypt.compare(String(password || ''), u.password_hash))) return res.status(401).json({ error: 'Incorrect password' });
+  if (!u.verified) {
+    try { await sendCode(u); } catch (e) { console.error('Mail error:', e.message); }
+    return res.status(403).json({ error: 'Please verify your email first – we sent you a code.', needsVerify: true, email: u.email });
+  }
+  res.json({ token: sign(u), user: { name: u.name, email: u.email } });
+}));
 
 app.get('/api/me', auth, async (req, res) => {
   const { rows: [u] } = await pool.query('SELECT name,email FROM users WHERE id=$1', [req.uid]);
@@ -100,7 +167,6 @@ app.get('/api/stats', async (req, res) => {
 });
 
 const DEVICES = ['Smart Thermostat','Smart LED Bulbs','Smart Plugs','Energy Monitor','Smart EV Charger','Rooftop Solar','Inverter AC (5-star)','Smart Geyser Timer','BLDC Smart Fan'];
-const wrap = fn => (req, res, next) => fn(req, res, next).catch(e => { console.error(e); res.status(500).json({ error: 'Server error' }); });
 
 // how many households use each device (public)
 app.get('/api/devices/stats', wrap(async (req, res) => {
@@ -136,7 +202,7 @@ app.post('/api/devices/plan', auth, wrap(async (req, res) => {
 
 app.post('/api/checklist', auth, wrap(async (req, res) => {
   const i = (req.body || {}).items;
-  if (!Array.isArray(i) || i.some(n => ![0, 1, 2, 3].includes(n))) return res.status(400).json({ error: 'Invalid items' });
+  if (!Array.isArray(i) || i.some(n => !Number.isInteger(n) || n < 0 || n > 20)) return res.status(400).json({ error: 'Invalid items' });
   await pool.query('INSERT INTO checklist(user_id,items) VALUES($1,$2) ON CONFLICT (user_id) DO UPDATE SET items=$2', [req.uid, [...new Set(i)]]);
   res.json({ ok: true });
 }));

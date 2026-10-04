@@ -18,3 +18,9 @@ build command "npm install", start command "npm start".
 
 ## Database tables (created automatically)
 users, survey_responses, subscribers, device_marks (devices people use / plan to buy), checklist (habit progress).
+
+## Email verification (Gmail)
+1. Sign in to leave.ecosmart@gmail.com > Google Account > Security > turn on 2-Step Verification.
+2. Security > App passwords > create one named "EcoSmart" (16 characters).
+3. Put it in .env as SMTP_PASS=... (no spaces) and add SMTP_USER and SMTP_PASS in Vercel > Settings > Environment Variables, then redeploy.
+Without SMTP settings, local runs print the code in the terminal; on Vercel, sign-up shows an email error.

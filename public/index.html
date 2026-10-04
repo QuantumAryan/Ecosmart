@@ -230,6 +230,20 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
       <div class="text-center"><p class="text-3xl font-extrabold text-eco-600"><span id="cS">0</span></p><p class="text-xs text-slate-500">kg saved with a 15% cut</p></div>
       <div class="text-center"><p class="text-3xl font-extrabold text-eco-600"><span id="cT">0</span></p><p class="text-xs text-slate-500">trees' yearly absorption (~21 kg each)</p></div>
     </div></div>
+  <div class="card p-8 mt-20"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2"><i class="fa-solid fa-route text-eco-600"></i> Commute Footprint</h3>
+    <p class="mut text-sm mb-6">Approximate CO₂ from your daily one-way trip, counted for 250 working days a year. Values are rough averages.</p>
+    <div class="grid md:grid-cols-4 gap-6 items-end">
+      <div><label class="text-xs font-semibold uppercase text-slate-500">How do you travel?</label><select id="tM" onchange="trip()" class="inp mt-1"></select></div>
+      <div><label class="text-xs font-semibold uppercase text-slate-500">Km per day (round trip)</label><input id="tD" type="number" min="0" value="20" oninput="trip()" class="inp mt-1"></div>
+      <div class="text-center"><p class="text-3xl font-extrabold text-slate-900 dark:text-white" id="tY">0</p><p class="text-xs text-slate-500">kg CO₂ per year</p></div>
+      <div class="text-center"><p class="text-3xl font-extrabold text-eco-600" id="tS">0</p><p class="text-xs text-slate-500">kg saved vs a petrol car</p></div></div></div>
+  <div class="card p-8 mt-20"><div class="flex flex-wrap items-center justify-between gap-3 mb-2"><h3 class="text-2xl font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-calendar-check text-eco-600"></i> 30-Day Eco Challenge</h3><button onclick="d30r()" class="text-xs text-slate-500 hover:underline">Reset</button></div>
+    <p class="mut text-sm mb-5">Do one small green action each day (see the quick wins below) and tap the day when done. Progress is saved on this device.</p>
+    <div id="c30" class="grid grid-cols-6 sm:grid-cols-10 gap-2"></div><p id="c30t" class="mt-4 font-semibold text-eco-600"></p></div>
+  <div class="mt-20"><h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">Quick Wins You Can Do Today</h3><div id="qw" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div></div>
+  <div class="mt-20 rounded-3xl bg-gradient-to-br from-eco-600 to-eco-900 text-white p-8 sm:p-10 text-center"><h3 class="text-2xl font-bold mb-3">Join the EcoSmart Community</h3>
+    <p class="text-eco-50 max-w-xl mx-auto mb-6">Share your green habits, get tips and see what others are doing. Follow us and tell us what you would like to see next.</p>
+    <div class="flex flex-wrap justify-center gap-4"><a href="https://www.instagram.com/leave_ecosmart?utm_source=qr&stkn=MXVweThvZnZ5cXpnbw==" target="_blank" rel="noopener noreferrer" class="bg-white text-eco-800 font-semibold rounded-full px-6 py-3 hover:bg-eco-100"><i class="fa-brands fa-instagram"></i> @leave_ecosmart</a><a href="mailto:leave.ecosmart@gmail.com" class="border border-white/60 font-semibold rounded-full px-6 py-3 hover:bg-white/10"><i class="fa-solid fa-envelope"></i> Email us</a></div></div>
 </div></section>
 
 <!-- SURVEY (registered users only) -->
@@ -247,6 +261,14 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
     <button onclick="go('survey')" class="btn w-full mb-3">Eco Survey</button>
     <button onclick="logout()" class="w-full py-3 rounded-full border border-slate-300 dark:border-slate-700 font-semibold">Log out</button>
     <button onclick="delAcct()" class="mt-4 text-xs text-red-500 hover:underline">Delete my account</button>
+  </div>
+  <div id="verBox" class="hidden card shadow-xl p-8 text-center">
+    <div class="w-16 h-16 mx-auto rounded-full bg-eco-100 dark:bg-eco-900/40 text-eco-600 flex items-center justify-center text-2xl mb-3"><i class="fa-solid fa-envelope-circle-check"></i></div>
+    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Confirm your email</h2>
+    <p class="text-sm mut mt-2 mb-5">We sent a 6-digit code to <b id="verMail" class="text-slate-900 dark:text-white"></b>. Check your inbox and spam folder. The code expires in 15 minutes.</p>
+    <input id="vCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" class="inp text-center text-2xl tracking-[.5em] font-bold" onkeydown="if(event.key==='Enter')verSubmit()">
+    <button id="vBtn" onclick="verSubmit()" class="btn w-full !rounded-xl mt-4">Verify &amp; continue</button>
+    <div class="flex justify-between text-sm mt-4"><button onclick="verResend()" class="text-eco-600 font-semibold hover:underline">Resend code</button><button onclick="verBack()" class="text-slate-500 hover:underline">Use a different email</button></div>
   </div>
   <div id="authBox" class="card shadow-xl p-8">
     <div id="tabsAuth" class="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-6 text-sm font-semibold">
@@ -268,13 +290,13 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
     <div class="space-y-4"><div class="flex items-center gap-2 text-white"><div class="w-8 h-8 rounded bg-eco-600 flex items-center justify-center"><i class="fa-solid fa-earth-americas text-sm"></i></div><span class="font-bold text-lg">EcoSmart</span></div>
       <p class="text-sm">Minimizing carbon footprints through accessible, intelligent home technology.</p></div>
     <div><h4 class="text-white font-semibold mb-4">Location</h4><ul class="space-y-2 text-sm">
-      <li class="flex gap-2"><i class="fa-solid fa-location-dot mt-1 text-eco-500"></i><span>Taj East Gate Road, Phase 2<br>Agra, Uttar Pradesh 282001<br>India</span></li>
-      <li><i class="fa-solid fa-envelope text-eco-500"></i> contact@ecosmart.in</li></ul></div>
+      <li class="flex gap-2"><i class="fa-solid fa-location-dot mt-1 text-eco-500"></i><span>North Rampuri<br>Muzaffarnagar 251002<br>Uttar Pradesh, India</span></li>
+      <li><i class="fa-solid fa-envelope text-eco-500"></i> <a href="mailto:leave.ecosmart@gmail.com" class="hover:text-white">leave.ecosmart@gmail.com</a></li></ul></div>
     <div><h4 class="text-white font-semibold mb-4">Newsletter</h4><p class="text-sm mb-3">Get the latest eco-tips and tech news.</p>
       <form onsubmit="event.preventDefault();fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:this.querySelector('input').value})}).catch(()=>{});this.reset();this.nextElementSibling.classList.remove('hidden')" class="flex"><input type="email" required placeholder="Email address" class="bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-l-lg w-full text-sm outline-none"><button class="bg-eco-600 hover:bg-eco-500 text-white px-3 rounded-r-lg text-sm font-semibold">Join</button></form>
       <p class="hidden text-eco-400 text-xs mt-2">Thanks for subscribing!</p></div>
     <div><h4 class="text-white font-semibold mb-4">Follow Us</h4><div class="flex space-x-3">
-      <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-instagram"></i></a>
+      <a href="https://www.instagram.com/leave_ecosmart?utm_source=qr&stkn=MXVweThvZnZ5cXpnbw==" target="_blank" rel="noopener noreferrer" aria-label="EcoSmart on Instagram" title="@leave_ecosmart" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-instagram"></i></a>
       <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-x-twitter"></i></a>
       <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-linkedin-in"></i></a></div></div>
   </div>
@@ -388,12 +410,13 @@ let me=null;
 function getUser(){return me}
 const tok=()=>{try{return localStorage.getItem('eco_token')}catch(e){return null}};
 async function api(path,opts={}){const r=await fetch('/api'+path,{...opts,headers:{'Content-Type':'application/json',...(tok()&&{Authorization:'Bearer '+tok()})}});
-  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
+  const d=await r.json().catch(()=>({}));if(!r.ok){const er=new Error(d.error||'Request failed');er.data=d;throw er}return d}
 async function authSubmit(e){e.preventDefault();const b=$('aBtn');b.disabled=true;
   try{const d=await api(mode==='register'?'/register':'/login',{method:'POST',body:JSON.stringify({name:$('aName').value.trim(),email:$('aMail').value.trim(),password:$('aPass').value})});
+    if(d.needsVerify){$('authForm').reset();showVerify(d.email);b.disabled=false;return}
     localStorage.setItem('eco_token',d.token);me=d.user;$('authForm').reset();$('authNote').classList.add('hidden');
     const t=pending||'home';pending=null;refreshAuth();loadData();go(t)}
-  catch(err){note(err.message);if(/register first/.test(err.message))authMode('register');if(/already registered/.test(err.message))authMode('login')}
+  catch(err){note(err.message);if(err.data&&err.data.needsVerify)showVerify(err.data.email);if(/register first/.test(err.message))authMode('register');if(/already registered/.test(err.message))authMode('login')}
   b.disabled=false}
 function logout(){try{localStorage.removeItem('eco_token')}catch(e){}me=null;myData=null;setPlanBoxes([]);refreshAuth();go('home')}
 function refreshAuth(){const u=getUser();drawStats();
@@ -551,6 +574,33 @@ async function delAcct(){
   try{await api('/me',{method:'DELETE',body:JSON.stringify({password:pw})});logout();alert('Your account was deleted.')}catch(e){alert(e.message)}}
 fetch('/api/devices/stats').then(r=>r.ok?r.json():{}).then(j=>{useStats=j;drawDev();drawTbl()}).catch(()=>{});
 drawDev();drawTbl();plan();
+/* ---------- email verification UI ---------- */
+var verEmail=null;
+const _ra=refreshAuth;
+refreshAuth=function(){_ra();const u=getUser();$('verBox').classList.toggle('hidden',!verEmail||!!u);if(verEmail&&!u)$('authBox').classList.add('hidden')};
+function showVerify(email){verEmail=email;$('verMail').textContent=email;$('vCode').value='';note('Check your inbox (and spam folder) for the 6-digit code.');refreshAuth();setTimeout(()=>$('vCode').focus(),100)}
+async function verSubmit(){const code=$('vCode').value.trim();if(!/^\d{6}$/.test(code)){note('Enter the 6-digit code from your email.');return}
+  $('vBtn').disabled=true;
+  try{const d=await api('/verify',{method:'POST',body:JSON.stringify({email:verEmail,code})});
+    localStorage.setItem('eco_token',d.token);me=d.user;verEmail=null;$('authNote').classList.add('hidden');
+    const t=pending||'home';pending=null;refreshAuth();loadData();go(t)}
+  catch(e){note(e.message)}
+  $('vBtn').disabled=false}
+async function verResend(){try{const d=await api('/resend',{method:'POST',body:JSON.stringify({email:verEmail})});note(d.sent?'A new code was sent. Check your inbox.':'Please wait a minute before asking for another code.')}catch(e){note(e.message)}}
+function verBack(){verEmail=null;$('authNote').classList.add('hidden');authMode('register');refreshAuth()}
+
+/* ---------- action extras ---------- */
+CK.push(['Set Your AC to 24–26°C','Raise the setting a degree or two and use a fan to feel cool.'],['Travel Green Twice a Week','Walk, cycle, carpool or use public transport instead of driving alone.'],['Cut Food Waste','Plan meals, store food well and use leftovers.'],['Plant or Adopt a Tree','Plant a native tree or join a local plantation drive.']);
+drawCk();
+const TR=[['Petrol car (alone)',.17],['Two-wheeler (petrol)',.05],['Bus',.09],['Metro / train',.04],['Electric car',.08],['Cycle / walk',0]];
+$('tM').innerHTML=TR.map((t,i)=>`<option value="${i}">${t[0]}</option>`).join('');
+function trip(){const f=TR[+$('tM').value][1],km=+$('tD').value||0;$('tY').textContent=Math.round(f*km*250).toLocaleString();$('tS').textContent=Math.max(0,Math.round((.17-f)*km*250)).toLocaleString()}trip();
+let d30=store.get('eco_30',[]);
+function draw30(){$('c30').innerHTML=Array.from({length:30},(_,i)=>i+1).map(i=>`<button onclick="tog30(${i})" class="aspect-square rounded-lg text-xs font-bold border ${d30.includes(i)?'bg-eco-600 text-white border-eco-600':'border-slate-300 dark:border-slate-700 hover:border-eco-500'}">${i}</button>`).join('');
+  const n=d30.length;$('c30t').textContent=n+' / 30 days done'+(n>=30?' – Eco Champion! 🌿':n>=15?' – halfway there, keep going! 🌱':n>=7?' – a full week, great start!':'')}
+function tog30(i){d30=d30.includes(i)?d30.filter(x=>x!==i):d30.concat(i);store.set('eco_30',d30);draw30()}
+function d30r(){if(confirm('Reset your 30-day progress?')){d30=[];store.set('eco_30',d30);draw30()}}draw30();
+$('qw').innerHTML=[['fa-lightbulb','Lights and fans off','Switch them off whenever you leave a room.'],['fa-shirt','Wash smart','Use cold water and full loads; dry clothes in the sun.'],['fa-bag-shopping','Carry your own','Keep a cloth bag and a reusable bottle with you.'],['fa-droplet','Fix leaks','A dripping tap wastes many litres a day.'],['fa-wind','Clean AC filters','Dirty filters make the AC work harder.'],['fa-carrot','Eat local and seasonal','Less transport and storage means fewer emissions.'],['fa-person-walking','Walk short trips','Skip the vehicle for anything under 1–2 km.'],['fa-recycle','Segregate waste','Separate wet and dry waste so more can be recycled.']].map(q=>`<div class="card p-6"><i class="fa-solid ${q[0]} text-eco-600 text-2xl mb-3"></i><h4 class="font-bold text-slate-900 dark:text-white mb-1">${q[1]}</h4><p class="text-sm mut">${q[2]}</p></div>`).join('');
 </script>
 </body>
 </html>
