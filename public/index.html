@@ -282,7 +282,7 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
     <div class="space-y-4"><div class="flex items-center gap-2 text-white"><i class="fa-solid fa-leaf text-eco-400 text-2xl"></i><span class="font-bold text-lg">EcoSmart</span></div>
       <p class="text-sm">Minimizing carbon footprints through accessible, intelligent home technology.</p></div>
     <div><h4 class="text-white font-semibold mb-4">Location</h4><ul class="space-y-2 text-sm">
-      <li class="flex gap-2"><i class="fa-solid fa-location-dot mt-1 text-eco-500"></i><span>Lovely Professional University<br>Phagwara 251002<br>Punjab, India</span></li>
+      <li class="flex gap-2"><i class="fa-solid fa-location-dot mt-1 text-eco-500"></i><span>Lovely Professional University<br>Phagwara 144411<br>Punjab, India</span></li>
       <li><i class="fa-solid fa-envelope text-eco-500"></i> <a href="mailto:leave.ecosmart@gmail.com" class="hover:text-white">leave.ecosmart@gmail.com</a></li></ul></div>
     <div><h4 class="text-white font-semibold mb-4">Newsletter</h4><p class="text-sm mb-3">Get the latest eco-tips and tech news.</p>
       <form onsubmit="event.preventDefault();fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:this.querySelector('input').value})}).catch(()=>{});this.reset();this.nextElementSibling.classList.remove('hidden')" class="flex"><input type="email" required placeholder="Email address" class="bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-l-lg w-full text-sm outline-none"><button class="bg-eco-600 hover:bg-eco-500 text-white px-3 rounded-r-lg text-sm font-semibold">Join</button></form>
