@@ -44,7 +44,8 @@ async function init() {
     CREATE TABLE IF NOT EXISTS checklist (
       user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, items INT[] NOT NULL DEFAULT '{}');
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verified BOOLEAN NOT NULL DEFAULT TRUE;
-    ALTER TABLE users ALTER COLUMN verified SET DEFAULT FALSE;
+    ALTER TABLE users ALTER COLUMN verified SET DEFAULT TRUE;
+    UPDATE users SET verified=true WHERE verified=false;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_hash TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_expires TIMESTAMPTZ;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_sent_at TIMESTAMPTZ;
@@ -52,14 +53,11 @@ async function init() {
 }
 
 const wrap = fn => (req, res, next) => fn(req, res, next).catch(e => { console.error(e); res.status(500).json({ error: 'Server error' }); });
-// ---------- email verification ----------
+// ---------- notification emails (no OTP) ----------
 const FROM = 'EcoSmart <' + (process.env.SMTP_FROM || process.env.SMTP_USER || 'leave.ecosmart@gmail.com') + '>';
 let transporter = null;
-async function mail(to, name, code) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    if (process.env.NODE_ENV === 'production') throw new Error('Email service not configured');
-    console.log(`[DEV] Verification code for ${to}: ${code}`); return;
-  }
+async function sendMail(to, subject, text, html) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) { console.log('[mail skipped - SMTP not configured]', subject, '->', to); return; }
   const pass = process.env.SMTP_PASS.replace(/[\s"']/g, ''), user = process.env.SMTP_USER.trim();
   if (!transporter) {
     const port = +process.env.SMTP_PORT || 587;
@@ -67,24 +65,19 @@ async function mail(to, name, code) {
       ? nodemailer.createTransport({ host: process.env.SMTP_HOST.trim(), port, secure: port === 465, auth: { user, pass } })
       : nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
   }
-  const safe = String(name).replace(/[<>&"]/g, '');
-  await transporter.sendMail({ from: FROM, to, subject: 'Your EcoSmart verification code',
-    text: `Hi ${safe},\n\nYour EcoSmart verification code is ${code}. It expires in 15 minutes.\n\nIf you did not sign up, ignore this email.\n\nEcoSmart – North Rampuri, Muzaffarnagar 251002`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px"><h2 style="color:#16a34a;margin:0 0 8px">🌍 EcoSmart</h2><p>Hi ${safe},</p><p>Use this code to confirm your email:</p><p style="font-size:34px;letter-spacing:8px;font-weight:bold;text-align:center;background:#f0fdf4;border-radius:12px;padding:16px;margin:16px 0">${code}</p><p style="color:#64748b;font-size:13px">The code expires in 15 minutes. If you did not sign up, you can ignore this email.</p></div>` });
+  await transporter.sendMail({ from: FROM, to, subject, text, html });
 }
-const codeHash = (email, code) => crypto.createHmac('sha256', process.env.JWT_SECRET).update(email + ':' + code).digest('hex');
-async function sendCode(u) {
-  if (u.verify_sent_at && Date.now() - new Date(u.verify_sent_at).getTime() < 60000) return false; // 60s cooldown
-  const code = String(crypto.randomInt(100000, 1000000));
-  await pool.query("UPDATE users SET verify_hash=$1, verify_expires=now()+interval '15 minutes', verify_sent_at=now(), verify_attempts=0 WHERE id=$2", [codeHash(u.email, code), u.id]);
-  await mail(u.email, u.name, code);
-  return true;
-}
-function mailErr(e) {
-  if (/not configured/i.test(e.message)) return 'The email service is not set up on the server yet (SMTP_USER / SMTP_PASS missing).';
-  if (e.code === 'EAUTH' || /Invalid login|Username and Password/i.test(e.message)) return 'The server could not log in to the email account. Check SMTP_USER and SMTP_PASS. [' + (e.responseCode || e.code) + ']';
-  if (e.responseCode === 550 || e.code === 'EENVELOPE') return 'That email address was rejected. Please check it and try again.';
-  return 'Could not send the verification email. [' + (e.code || e.responseCode || 'error') + ' ' + String(e.message).slice(0, 80) + ']';
+const esc = s => String(s).replace(/[<>&"]/g, '');
+async function notify(u, kind) { // never blocks or breaks sign-in if email fails
+  const name = esc(u.name), reg = kind === 'register';
+  const when = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST';
+  const subject = reg ? 'Welcome to EcoSmart – registration successful' : 'EcoSmart – you signed in successfully';
+  const line = reg ? `Your EcoSmart account was created successfully on ${when}. Thank you for joining us in the fight against climate change!`
+                   : `You signed in to EcoSmart successfully on ${when}. If this was not you, please contact leave.ecosmart@gmail.com right away.`;
+  const text = `Hi ${name},\n\n${line}\n\nEcoSmart – North Rampuri, Muzaffarnagar 251002`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px"><h2 style="color:#16a34a;margin:0 0 8px">🌿 EcoSmart</h2><p>Hi ${name},</p><p>${esc(line)}</p><p style="color:#64748b;font-size:13px">EcoSmart – North Rampuri, Muzaffarnagar 251002</p></div>`;
+  try { await Promise.race([sendMail(u.email, subject, text, html), new Promise((_, rej) => setTimeout(() => rej(new Error('mail timeout')), 8000))]); }
+  catch (e) { console.error('Mail error:', e.message); }
 }
 async function domainOk(email) { // does the email domain really accept mail?
   const d = email.split('@')[1];
@@ -98,42 +91,16 @@ app.post('/api/register', limiter, wrap(async (req, res) => {
     return res.status(400).json({ error: 'Enter your name, a valid email and a password of 6+ characters' });
   const em = email.toLowerCase();
   if (!(await domainOk(em))) return res.status(400).json({ error: 'That email domain does not exist. Please check the address.' });
-  const hash = await bcrypt.hash(password, 10), nm = String(name).trim().slice(0, 100);
-  let u, fresh = false;
-  const { rows: [old] } = await pool.query('SELECT * FROM users WHERE email=$1', [em]);
-  if (old && old.verified) return res.status(409).json({ error: 'Email already registered – please sign in' });
-  if (old) { u = (await pool.query('UPDATE users SET name=$1, password_hash=$2 WHERE id=$3 RETURNING *', [nm, hash, old.id])).rows[0]; }
-  else { u = (await pool.query('INSERT INTO users(name,email,password_hash) VALUES($1,$2,$3) RETURNING *', [nm, em, hash])).rows[0]; fresh = true; }
-  try { await sendCode(u); }
-  catch (e) {
-    console.error('Mail error:', e.message);
-    if (fresh) await pool.query('DELETE FROM users WHERE id=$1', [u.id]);
-    return res.status(502).json({ error: mailErr(e) });
+  const hash = await bcrypt.hash(password, 10);
+  try {
+    const { rows: [u] } = await pool.query('INSERT INTO users(name,email,password_hash,verified) VALUES($1,$2,$3,true) RETURNING id,name,email',
+      [String(name).trim().slice(0, 100), em, hash]);
+    await notify(u, 'register');
+    res.json({ token: sign(u), user: { name: u.name, email: u.email } });
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'Email already registered – please sign in' });
+    throw e;
   }
-  res.json({ needsVerify: true, email: em });
-}));
-
-app.post('/api/verify', limiter, wrap(async (req, res) => {
-  const em = String((req.body || {}).email || '').toLowerCase(), code = String((req.body || {}).code || '').trim();
-  const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1', [em]);
-  if (!u) return res.status(404).json({ error: 'No account found – please register first' });
-  if (u.verified) return res.status(400).json({ error: 'Email already verified – please sign in' });
-  if (!u.verify_hash || !u.verify_expires || new Date(u.verify_expires) < new Date()) return res.status(400).json({ error: 'Code expired – tap "Resend code"' });
-  if (u.verify_attempts >= 5) return res.status(429).json({ error: 'Too many wrong tries – request a new code' });
-  if (codeHash(em, code) !== u.verify_hash) {
-    await pool.query('UPDATE users SET verify_attempts=verify_attempts+1 WHERE id=$1', [u.id]);
-    return res.status(400).json({ error: 'Wrong code. Please check and try again.' });
-  }
-  await pool.query('UPDATE users SET verified=true, verify_hash=NULL, verify_expires=NULL WHERE id=$1', [u.id]);
-  res.json({ token: sign(u), user: { name: u.name, email: u.email } });
-}));
-
-app.post('/api/resend', limiter, wrap(async (req, res) => {
-  const em = String((req.body || {}).email || '').toLowerCase();
-  const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1 AND verified=false', [em]);
-  if (!u) return res.json({ ok: true, sent: true });
-  try { res.json({ ok: true, sent: await sendCode(u) }); }
-  catch (e) { console.error('Mail error:', e.message); res.status(502).json({ error: mailErr(e) }); }
 }));
 
 app.post('/api/login', limiter, wrap(async (req, res) => {
@@ -141,10 +108,7 @@ app.post('/api/login', limiter, wrap(async (req, res) => {
   const { rows: [u] } = await pool.query('SELECT * FROM users WHERE email=$1', [String(email || '').toLowerCase()]);
   if (!u) return res.status(404).json({ error: 'No account found – please register first' });
   if (!(await bcrypt.compare(String(password || ''), u.password_hash))) return res.status(401).json({ error: 'Incorrect password' });
-  if (!u.verified) {
-    try { await sendCode(u); } catch (e) { console.error('Mail error:', e.message); }
-    return res.status(403).json({ error: 'Please verify your email first – we sent you a code.', needsVerify: true, email: u.email });
-  }
+  await notify(u, 'login');
   res.json({ token: sign(u), user: { name: u.name, email: u.email } });
 }));
 
