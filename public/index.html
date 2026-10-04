@@ -385,6 +385,7 @@ function authMode(m){mode=m;$('aName').style.display=m==='register'?'':'none';$(
   [['tLogin','login'],['tReg','register']].forEach(([id,k])=>{$(id).className='flex-1 py-2 rounded-lg '+(k===m?'bg-white dark:bg-slate-700 shadow text-eco-700 dark:text-eco-400':'')})}
 function note(t){$('authNote').textContent=t;$('authNote').classList.remove('hidden')}
 let me=null;
+function getUser(){return me}
 const tok=()=>{try{return localStorage.getItem('eco_token')}catch(e){return null}};
 async function api(path,opts={}){const r=await fetch('/api'+path,{...opts,headers:{'Content-Type':'application/json',...(tok()&&{Authorization:'Bearer '+tok()})}});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
