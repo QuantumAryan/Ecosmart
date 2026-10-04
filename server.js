@@ -60,7 +60,7 @@ async function mail(to, name, code) {
     if (process.env.NODE_ENV === 'production') throw new Error('Email service not configured');
     console.log(`[DEV] Verification code for ${to}: ${code}`); return;
   }
-  transporter = transporter || nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+  transporter = transporter || nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.SMTP_USER.trim(), pass: process.env.SMTP_PASS.replace(/[\s"']/g, '') } });
   const safe = String(name).replace(/[<>&"]/g, '');
   await transporter.sendMail({ from: FROM, to, subject: 'Your EcoSmart verification code',
     text: `Hi ${safe},\n\nYour EcoSmart verification code is ${code}. It expires in 15 minutes.\n\nIf you did not sign up, ignore this email.\n\nEcoSmart – North Rampuri, Muzaffarnagar 251002`,
