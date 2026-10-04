@@ -53,14 +53,20 @@ async function init() {
 
 const wrap = fn => (req, res, next) => fn(req, res, next).catch(e => { console.error(e); res.status(500).json({ error: 'Server error' }); });
 // ---------- email verification ----------
-const FROM = 'EcoSmart <' + (process.env.SMTP_USER || 'leave.ecosmart@gmail.com') + '>';
+const FROM = 'EcoSmart <' + (process.env.SMTP_FROM || process.env.SMTP_USER || 'leave.ecosmart@gmail.com') + '>';
 let transporter = null;
 async function mail(to, name, code) {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     if (process.env.NODE_ENV === 'production') throw new Error('Email service not configured');
     console.log(`[DEV] Verification code for ${to}: ${code}`); return;
   }
-  transporter = transporter || nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.SMTP_USER.trim(), pass: process.env.SMTP_PASS.replace(/[\s"']/g, '') } });
+  const pass = process.env.SMTP_PASS.replace(/[\s"']/g, ''), user = process.env.SMTP_USER.trim();
+  if (!transporter) {
+    const port = +process.env.SMTP_PORT || 587;
+    transporter = process.env.SMTP_HOST
+      ? nodemailer.createTransport({ host: process.env.SMTP_HOST.trim(), port, secure: port === 465, auth: { user, pass } })
+      : nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
+  }
   const safe = String(name).replace(/[<>&"]/g, '');
   await transporter.sendMail({ from: FROM, to, subject: 'Your EcoSmart verification code',
     text: `Hi ${safe},\n\nYour EcoSmart verification code is ${code}. It expires in 15 minutes.\n\nIf you did not sign up, ignore this email.\n\nEcoSmart – North Rampuri, Muzaffarnagar 251002`,
@@ -76,9 +82,9 @@ async function sendCode(u) {
 }
 function mailErr(e) {
   if (/not configured/i.test(e.message)) return 'The email service is not set up on the server yet (SMTP_USER / SMTP_PASS missing).';
-  if (e.code === 'EAUTH' || /Invalid login|Username and Password/i.test(e.message)) return 'The server could not log in to Gmail. Check the Gmail App Password in SMTP_PASS.';
+  if (e.code === 'EAUTH' || /Invalid login|Username and Password/i.test(e.message)) return 'The server could not log in to the email account. Check SMTP_USER and SMTP_PASS. [' + (e.responseCode || e.code) + ']';
   if (e.responseCode === 550 || e.code === 'EENVELOPE') return 'That email address was rejected. Please check it and try again.';
-  return 'Could not send the verification email. Please try again in a moment.';
+  return 'Could not send the verification email. [' + (e.code || e.responseCode || 'error') + ' ' + String(e.message).slice(0, 80) + ']';
 }
 async function domainOk(email) { // does the email domain really accept mail?
   const d = email.split('@')[1];
