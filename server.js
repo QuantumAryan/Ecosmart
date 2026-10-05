@@ -68,32 +68,15 @@ async function sendMail(to, subject, text, html) {
   await transporter.sendMail({ from: FROM, to, subject, text, html });
 }
 const esc = s => String(s).replace(/[<>&"]/g, '');
-
-// ================= EDIT YOUR EMAILS HERE =================
-const SITE = (process.env.SITE_URL || '').replace(/\/$/, ''); // e.g. https://ecosmart.vercel.app (needed for the logo image)
-const MAIL = {
-  footer: 'EcoSmart – North Rampuri, Muzaffarnagar 251002',
-  register: {
-    subject: 'Welcome to EcoSmart – registration successful',
-    title: 'Welcome aboard! 🌿',
-    message: when => `Your EcoSmart account was created successfully on ${when}. Thank you for joining us in the fight against climate change!`
-  },
-  login: {
-    subject: 'EcoSmart – you signed in successfully',
-    title: 'Sign-in successful',
-    message: when => `You signed in to EcoSmart successfully on ${when}. If this was not you, please contact leave.ecosmart@gmail.com right away.`
-  }
-};
-// =========================================================
-
 async function notify(u, kind) { // never blocks or breaks sign-in if email fails
-  const m = MAIL[kind === 'register' ? 'register' : 'login'], name = esc(u.name);
+  const name = esc(u.name), reg = kind === 'register';
   const when = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST';
-  const line = m.message(when);
-  const text = `Hi ${name},\n\n${line}\n\n${MAIL.footer}`;
-  const logo = SITE ? `<img src="${SITE}/logo.png" width="64" height="64" alt="EcoSmart" style="display:block;margin:0 auto 12px">` : '';
-  const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:28px;border:1px solid #e2e8f0;border-radius:16px;text-align:center">${logo}<h2 style="color:#16a34a;margin:0 0 4px">${esc(m.title)}</h2><p style="color:#0f172a;text-align:left">Hi ${name},</p><p style="color:#334155;text-align:left;line-height:1.5">${esc(line)}</p><p style="color:#94a3b8;font-size:12px;margin-top:24px">${esc(MAIL.footer)}</p></div>`;
-  try { await Promise.race([sendMail(u.email, m.subject, text, html), new Promise((_, rej) => setTimeout(() => rej(new Error('mail timeout')), 8000))]); }
+  const subject = reg ? 'Welcome to EcoSmart – registration successful' : 'EcoSmart – you signed in successfully';
+  const line = reg ? `Your EcoSmart account was created successfully on ${when}. Thank you for joining us in the fight against climate change!`
+                   : `You signed in to EcoSmart successfully on ${when}. If this was not you, please contact leave.ecosmart@gmail.com right away.`;
+  const text = `Hi ${name},\n\n${line}\n\nEcoSmart – North Rampuri, Muzaffarnagar 251002`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px"><h2 style="color:#16a34a;margin:0 0 8px">🌿 EcoSmart</h2><p>Hi ${name},</p><p>${esc(line)}</p><p style="color:#64748b;font-size:13px">EcoSmart – North Rampuri, Muzaffarnagar 251002</p></div>`;
+  try { await Promise.race([sendMail(u.email, subject, text, html), new Promise((_, rej) => setTimeout(() => rej(new Error('mail timeout')), 8000))]); }
   catch (e) { console.error('Mail error:', e.message); }
 }
 async function domainOk(email) { // does the email domain really accept mail?

@@ -22,6 +22,3 @@ users, survey_responses, subscribers, device_marks (devices people use / plan to
 ## Emails (no OTP)
 After register and after each sign-in the site sends a "successful registration / sign-in" notification email.
 Set SMTP_USER and SMTP_PASS (Gmail App Password) in .env and in Vercel. If they are missing, emails are skipped and sign-up still works.
-
-Set SITE_URL (your live site address, no trailing slash) in Vercel so the logo (public/logo.png) shows in emails.
-Edit the email wording in server.js between the 'EDIT YOUR EMAILS HERE' lines.
