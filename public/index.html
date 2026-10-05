@@ -292,7 +292,7 @@ body{font-family:'Inter',sans-serif;overflow-x:hidden}
       <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-x-twitter"></i></a>
       <a href="#" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-eco-600 hover:text-white"><i class="fa-brands fa-linkedin-in"></i></a></div></div>
   </div>
-  <div class="border-t border-slate-800 pt-8 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center gap-2"><p>&copy; 2026 EcoSmart Initiative. All rights reserved.</p><p>Weather &amp; AQI data: Open-Meteo</p></div>
+  <div class="border-t border-slate-800 pt-8 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center gap-2"><p>&copy; 2026 EcoSmart Initiative. All rights reserved.</p><p>Weather &amp; AQI data: Open-Meteo · Photos: Unsplash</p></div>
 </div></footer>
 <div id="devModal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="if(event.target===this)devX()"><div id="devMB" class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative"></div></div>
 <button id="up" onclick="scrollTo({top:0,behavior:'smooth'})" class="hidden fixed bottom-6 right-6 z-30 w-12 h-12 rounded-full bg-eco-600 hover:bg-eco-700 text-white shadow-lg" title="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
@@ -327,7 +327,7 @@ document.querySelector('.nl[data-t=home]').classList.add('on');
 
 /* ---------- devices (climate-relevant only) ---------- */
 const DEV=[
-['Smart Thermostat','Climate Control','https://res.cloudinary.com/dbkbadq4w/image/upload/q_auto,w_1536,c_limit,f_auto/MST_07_Blog_lifestyle02_384x280_d352e4b4cb','fa-temperature-half','Up to 15% Savings','Learns your routine and uses geofencing to adjust temperatures while you are away, cutting HVAC waste.'],
+['Smart Thermostat','Climate Control','https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?w=700&q=75&auto=format&fit=crop','fa-temperature-half','Up to 15% Savings','Learns your routine and uses geofencing to adjust temperatures while you are away, cutting HVAC waste.'],
 ['Smart LED Bulbs','Lighting Efficiency','https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=600&q=80','fa-lightbulb','75% Less Energy','Efficient LEDs that follow daylight and occupancy, so no light burns in an empty room.'],
 ['Smart Plugs','Vampire Power Fix','https://images.unsplash.com/photo-1558002038-1055907df827?w=600&q=80','fa-plug','Stop Phantom Drain','Cut power to devices on standby, which can account for around 10% of home energy use.'],
 ['Energy Monitor','Data Tracking','https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80','fa-chart-pie','Real-time Audits','Shows which appliances waste the most electricity so you can fix the biggest leaks first.'],
@@ -457,8 +457,8 @@ function initCharts2(){const dk=document.documentElement.classList.contains('dar
   charts.push(new Chart($('sec'),{type:'doughnut',data:{labels:['Electricity & heat','Agriculture & land use','Industry','Transport','Buildings','Other'],datasets:[{data:[30,22,21,15,7,5],backgroundColor:['#ef4444','#16a34a','#f97316','#3b82f6','#eab308','#8b5cf6'],borderWidth:2,borderColor:dk?'#0f172a':'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:tx,boxWidth:10,font:{size:10}}}}}}))}
 function calc(){const k=+$('cK').value||0,y=k*12*0.71,s=y*0.15;$('cY').textContent=Math.round(y).toLocaleString();$('cS').textContent=Math.round(s).toLocaleString();$('cT').textContent=Math.round(s/21)}calc();
 /* ---------- richer devices section ---------- */
-DEV.push(['Rooftop Solar','Clean Generation','','fa-solar-panel','Make Your Own Power','Rooftop panels with an app-based monitor replace grid power with sunshine, one of the biggest cuts in home emissions.'],
-['Inverter AC (5-star)','Efficient Cooling','','fa-snowflake','30–40% Less Power','BEE 5-star inverter ACs vary compressor speed instead of switching on and off. Pair with a 24–26°C setting.'],
+DEV.push(['Rooftop Solar','Clean Generation','https://images.unsplash.com/flagged/photo-1566838616631-f2618f74a6a2?w=700&q=75&auto=format&fit=crop','fa-solar-panel','Make Your Own Power','Rooftop panels with an app-based monitor replace grid power with sunshine, one of the biggest cuts in home emissions.'],
+['Inverter AC (5-star)','Efficient Cooling','https://images.unsplash.com/photo-1762341123870-d706f257a12e?w=700&q=75&auto=format&fit=crop','fa-snowflake','30–40% Less Power','BEE 5-star inverter ACs vary compressor speed instead of switching on and off. Pair with a 24–26°C setting.'],
 ['Smart Geyser Timer','Water Heating','','fa-fire-flame-simple','Heat Only When Needed','A timer or smart switch heats water just before use, avoiding hours of idle reheating.']);
 const DX={'Smart Thermostat':[850,'Medium','Easy','Cooling & heating'],'Smart LED Bulbs':[450,'Low','Easy','Lighting'],'Smart Plugs':[200,'Low','Easy','Standby power'],'Energy Monitor':[300,'Medium','Moderate','Finding waste'],'Smart EV Charger':[1200,'High','Moderate','Electric vehicles'],'Rooftop Solar':[1400,'High','Hard','Clean power (per kW)'],'Inverter AC (5-star)':[600,'High','Easy','Cooling'],'Smart Geyser Timer':[250,'Low','Easy','Hot water']};
 let devF='All';
@@ -488,7 +488,7 @@ function qzA(i){const q=QZ[qzI];document.querySelectorAll('.qo').forEach((b,j)=>
 qz();
 addEventListener('scroll',()=>$('up').classList.toggle('hidden',scrollY<600),{passive:true});
 /* ---------- devices v3: details modal, planner, new fan ---------- */
-DEV.push(['BLDC Smart Fan','Efficient Ventilation','','fa-fan','Half the Power','Brushless (BLDC) ceiling fans use roughly 28–35 W instead of 70–80 W, and many have remote or app control.']);
+DEV.push(['BLDC Smart Fan','Efficient Ventilation','https://images.unsplash.com/photo-1609519479841-5fd3b2884e17?w=700&q=75&auto=format&fit=crop','fa-fan','Half the Power','Brushless (BLDC) ceiling fans use roughly 28–35 W instead of 70–80 W, and many have remote or app control.']);
 DX['BLDC Smart Fan']=[120,'Low','Easy','Fans (per fan)'];
 const DI={
 'Smart Thermostat':['₹1,500–3,500 for a smart IR AC controller; ducted HVAC thermostats cost more','Often under 1 year','Learns your routine and adjusts the AC using room sensors, schedules and phone location. In India, smart AC controllers send IR commands to ordinary split ACs.',['Works with your AC brand','Built-in temperature and humidity sensor','Schedules that still run if Wi‑Fi drops'],['Mount away from direct sun and the AC outlet','Set 24–26°C as the default','Create away and sleep schedules'],'Raising the AC setting by 1°C cuts cooling energy by roughly 6%.'],
